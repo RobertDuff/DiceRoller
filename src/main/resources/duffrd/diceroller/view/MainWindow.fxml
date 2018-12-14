@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="600.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="duffrd.diceroller.view.MainWindowController">
+   <children>
+      <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <MenuBar>
+              <menus>
+                <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
+                  <items>
+                        <MenuItem accelerator="CTRL+N" mnemonicParsing="false" onAction="#newFile" text="New" />
+                        <MenuItem accelerator="CTRL+O" mnemonicParsing="false" onAction="#openFile" text="Open" />
+                        <MenuItem accelerator="CTRL+S" mnemonicParsing="false" onAction="#saveFile" text="Save" />
+                        <MenuItem mnemonicParsing="false" onAction="#saveFileAs" text="Save As..." />
+                    <MenuItem accelerator="CTRL+W" mnemonicParsing="false" onAction="#closeFile" text="Close" />
+                        <SeparatorMenuItem fx:id="recentBeginSeparator" mnemonicParsing="false" />
+                        <SeparatorMenuItem fx:id="recentEndSeparator" mnemonicParsing="false" />
+                        <MenuItem accelerator="F4" mnemonicParsing="false" onAction="#exit" text="Exit" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                  <items>
+                        <MenuItem mnemonicParsing="false" text="New Roller" />
+                        <MenuItem mnemonicParsing="false" text="Edit Roller" />
+                    <MenuItem mnemonicParsing="false" text="Delete Roller" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem mnemonicParsing="false" text="New Group" />
+                        <MenuItem mnemonicParsing="false" text="Rename Group" />
+                        <MenuItem mnemonicParsing="false" text="Delete Group" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                  <items>
+                        <MenuItem mnemonicParsing="false" text="Dice Roller Help" />
+                    <MenuItem mnemonicParsing="false" text="About" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+            <SplitPane dividerPositions="0.25" VBox.vgrow="ALWAYS">
+               <items>
+                  <Accordion fx:id="chooser" maxWidth="300.0" minWidth="75.0" />
+                  <SplitPane fx:id="detailPane" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" />
+               </items>
+            </SplitPane>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

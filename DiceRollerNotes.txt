@@ -1,0 +1,10 @@
+DiePattern:
+
+	d###		(d4, d6, d8, etc)
+	d[###...]	(d[1, 2, 3] d[ 2:8, 3:10 ])
+	
+DicePattern:
+
+	N<<DiePattern>>			- N Dice.				(3d6, 2d4, 3d[ 3:4 6:7 ])
+	N:H<<DiePattern>> 		- Highest H of N Dice.	(4:3d6)
+	N:-L<<DicePattern>>		- Lowest L of N Dice.	(4:-3d6)

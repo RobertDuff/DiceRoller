@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.text.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane fx:id="outcomePane" style="-fx-background-color: LIGHTSEAGREEN;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="duffrd.diceroller.view.OutcomePaneController">
+   <children>
+      <Label fx:id="outcomeLabel" layoutX="-14.0" layoutY="-46.0" text="Outcome" AnchorPane.leftAnchor="40.0" AnchorPane.topAnchor="20.0">
+         <font>
+            <Font name="Calibri" size="48.0" />
+         </font>
+      </Label>
+      <Label fx:id="triggerLabel" layoutX="95.0" layoutY="53.0" text="Triggers" AnchorPane.leftAnchor="60.0" AnchorPane.topAnchor="70.0">
+         <font>
+            <Font size="18.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="200.0" prefWidth="535.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="duffrd.diceroller.view.HistoryPaneController">
+   <children>
+      <TableView fx:id="historyTable" prefHeight="200.0" prefWidth="500.0" tableMenuButtonVisible="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <columns>
+          <TableColumn fx:id="historyTableTimeColumn" prefWidth="75.0" text="Time" />
+            <TableColumn fx:id="historyTableRollerNameColumn" prefWidth="100.0" text="Roller" />
+          <TableColumn fx:id="historyTableOutcomeColumn" prefWidth="100.0" text="Outcome" />
+            <TableColumn fx:id="historyTableTriggersColumn" prefWidth="150.0" text="Triggers" />
+            <TableColumn fx:id="historyTableFacesColumn" prefWidth="150.0" text="Faces" />
+        </columns>
+      </TableView>
+   </children>
+</AnchorPane>
