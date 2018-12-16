@@ -7,33 +7,31 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import org.apache.commons.jexl2.Expression;
-import org.apache.commons.jexl2.JexlContext;
-import org.apache.commons.jexl2.JexlEngine;
-import org.apache.commons.jexl2.MapContext;
+import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaValue;
 
-import utility.join.Join;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import utility.join.Join;
+import utility.lua.Function;
+import utility.lua.LuaProvider;
 
 public class Roller
 {
-	static final JexlEngine jexlEngine = new JexlEngine();
-	
+	static final Globals lua = LuaProvider.lua();
 	static Random random = new Random();
 	
 	String rollerName;
 	String definition;
 	
-	Expression expression;
-	JexlContext context = new MapContext();
+	Function expression;
 	
-	Map<String,Dice> dice = new HashMap<>();
+	List<Dice> dice = new ArrayList<>();
 	Map<String,IntegerProperty> variables = new HashMap<>();
 	
-	Map<String,Expression> triggers = new HashMap<>();
+	Map<String,Function> triggers = new HashMap<>();
 	Map<Object,String> labels = new HashMap<>();
 	
 	private StringProperty outcomeProperty = new SimpleStringProperty ();
@@ -77,38 +75,39 @@ public class Roller
 	public void roll()
 	{
 		StringBuilder historyFacesBuilder = new StringBuilder();
-		
 		// Roll Each Dice
-		for ( String dieName : dice.keySet () )
+				
+		DieNameSequence seq = new DieNameSequence();
+		
+		for ( Dice die : dice )
 		{
-			DiceOutcome diceOutcome = dice.get ( dieName ).roll ();
+			DiceOutcome diceOutcome = die.roll ();
 			historyFacesBuilder.append ( diceOutcome.faces.toString () );
-			
-			context.set ( dieName, diceOutcome.outcome );
+		
+			lua.set ( seq.next(), diceOutcome.outcome );
 		}
 		
 		// Update Variables
 		for ( String variable : variables.keySet () )
-			context.set ( variable, variables.get ( variable ).get () );
+			lua.set ( variable, variables.get ( variable ).get () );
 		
 		// Calculate Outcome
-		Object rawOutcome = expression.evaluate ( context );
+		LuaValue rawOutcome = expression.call();
+		lua.set( "OUTCOME", rawOutcome );
 		
 		// Get Outcome String
-		String outcome;
+		String outcome = rawOutcome.tojstring();
 		
-		if ( labels.containsKey ( rawOutcome ) )
-			outcome = labels.get ( rawOutcome );
-		else
-			outcome = rawOutcome.toString ();
+		if ( rawOutcome.isboolean() && labels.containsKey ( rawOutcome.toboolean() ) )
+			outcome = labels.get ( rawOutcome.toboolean() );
 		
-		// Insert Outcome into Context for Trigger Evaluation
-		context.set ( "OUTCOME", rawOutcome );
+		else if ( rawOutcome.isint() && labels.containsKey ( rawOutcome.toint() ) )
+			outcome = labels.get ( rawOutcome.toint() );
 		
 		List<String> triggerList = new ArrayList<>();
 		
 		for ( String triggerName : triggers.keySet () )
-			if ( ( Boolean ) triggers.get ( triggerName ).evaluate ( context ) == true )
+			if ( ( Boolean ) triggers.get ( triggerName ).call().toboolean() == true )
 				triggerList.add ( triggerName );
 		
 		String triggerString = Join.join ( ", ", triggerList );
@@ -125,12 +124,12 @@ public class Roller
 		StringBuilder b = new StringBuilder ();
 		b.append ( "Roller: '" + rollerName + "' -- {" + definition + "}\n" );
 		
-		b.append ( "\tExpression: " + expression.dump () + "\n" );
+		b.append ( "\tExpression: " + expression.toString() + "\n" );
 		
 		b.append ( "\tDice:\n" );
 		
-		for ( String d : dice.keySet () )
-			b.append ( "\t\t'" + d + "': " + dice.get ( d ).toString () + "\n" );
+		for ( Dice d : dice )
+			b.append ( "\t\t'" + d + "': " + d.toString () + "\n" );
 		
 		b.append ( "\tVariables:\n" );
 		

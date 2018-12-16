@@ -22,7 +22,7 @@ public class RollerComposer
 			Map<String,String> triggers = new HashMap<>();
 			
 			for ( String trigger : roller.triggers.keySet () )
-				triggers.put ( trigger, roller.triggers.get ( trigger ).getExpression () );
+				triggers.put ( trigger, roller.triggers.get ( trigger ).toString() );
 			
 			composition.put ( RollerBuilder.TRIGGERS_KEY, triggers );
 		}

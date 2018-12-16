@@ -5,10 +5,16 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.luaj.vm2.Globals;
+
 import javafx.beans.property.SimpleIntegerProperty;
+import utility.lua.Function;
+import utility.lua.LuaProvider;
 
 public class RollerBuilder
 {
+	private static final Globals lua = LuaProvider.lua();
+	
 	static final Pattern DICE_REGEX     = Pattern.compile ( "(((-?\\d+),)?(\\d+))?[Dd](\\d+|\\[([^\\[]+)\\])" );
 	static final Pattern VARIABLE_REGEX = Pattern.compile ( "[A-Za-z]{2,}" );
 
@@ -16,19 +22,6 @@ public class RollerBuilder
 	static final String DEFINITION_KEY = "definition";
 	static final String LABELS_KEY     = "labels";
 	static final String TRIGGERS_KEY   = "triggers";
-	
-	private static class DieNameGenerator
-	{
-		private char variable = 'A';
-		
-		public String generate()
-		{
-			if ( variable > 'Z' )
-				throw new IndexOutOfBoundsException ( "Too Many Dice Have Been Defined for a single Roller" );
-			
-			return String.valueOf ( variable++ );
-		}
-	}
 	
 	@SuppressWarnings ( "unchecked" )
 	public static Roller build ( Map<String,Object> def )
@@ -88,7 +81,7 @@ public class RollerBuilder
 		// Extract Dice
 		//
 		
-		DieNameGenerator dieNameGenerator = new DieNameGenerator ();
+		DieNameSequence seq = new DieNameSequence();
 		
 		while ( ( matcher = DICE_REGEX.matcher ( definition ) ).find () )
 		{			
@@ -147,14 +140,12 @@ public class RollerBuilder
 			}
 			
 			Dice dice = new Dice ( die, num, start, end );
-			
-			String dieName = dieNameGenerator.generate ();
-			
-			definition = definition.replace ( matcher.group (), dieName );
-			roller.dice.put ( dieName, dice );
+						
+			definition = definition.replace ( matcher.group (), seq.next() );
+			roller.dice.add ( dice );
 		}
 		
-		roller.expression = Roller.jexlEngine.createExpression ( definition );
+		roller.expression = new Function ( lua, "return ", definition );
 	}
 
 	private static void buildLabels ( Roller roller, Map<Object,String> labels )
@@ -165,7 +156,7 @@ public class RollerBuilder
 	private static void buildTriggers ( Roller roller, Map<String,String> triggers )
 	{
 		for ( String trigger : triggers.keySet () )
-			roller.triggers.put ( trigger, Roller.jexlEngine.createExpression ( triggers.get ( trigger ) ) );
+			roller.triggers.put ( trigger, new Function ( lua, "return ", triggers.get ( trigger ) ) );
 	}
 	
 	private RollerBuilder () {}

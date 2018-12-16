@@ -1,16 +1,21 @@
 package duffrd.diceroller.model;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.luaj.vm2.Globals;
 
 import javafx.beans.property.SimpleIntegerProperty;
+import utility.lua.Function;
+import utility.lua.LuaProvider;
 
 public class RollerTest
 {
+	public static final Globals lua = LuaProvider.lua();
+	
 	@Before
 	public void before()
 	{
@@ -24,8 +29,8 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Simple";
-		roller.expression = Roller.jexlEngine.createExpression ( "DICE1" );
-		roller.dice.put ( "DICE1", new Dice ( new Die ( 6 ), 1 ) );
+		roller.expression = new Function ( lua, "return A" );
+		roller.dice.add ( new Dice ( new Die ( 6 ), 1 ) );
 		
 		roller.roll ();
 		
@@ -62,8 +67,8 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Bool";
-		roller.expression = Roller.jexlEngine.createExpression ( "DICE1 > 10" );
-		roller.dice.put ( "DICE1", new Dice ( new Die ( 20 ), 1 ) );
+		roller.expression = new Function ( lua, "return A > 10" );
+		roller.dice.add ( new Dice ( new Die ( 20 ), 1 ) );
 		
 		roller.roll ();
 		
@@ -92,8 +97,8 @@ public class RollerTest
 		Roller roller = new Roller ();
 		
 		roller.rollerName = "Test";
-		roller.expression = Roller.jexlEngine.createExpression ( "DICE1 > 10" );
-		roller.dice.put ( "DICE1", new Dice ( new Die ( 20 ), 1 ) );
+		roller.expression = new Function ( lua, "return A > 10" );
+		roller.dice.add ( new Dice ( new Die ( 20 ), 1 ) );
 		
 		roller.labels.put ( false, "Failure" );
 		roller.labels.put ( true,  "Success" );
@@ -125,8 +130,8 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Named";
-		roller.expression = Roller.jexlEngine.createExpression ( "DICE1+5" );
-		roller.dice.put ( "DICE1", new Dice ( new Die ( 3 ), 1 ) );
+		roller.expression = new Function ( lua, "return A+5" );
+		roller.dice.add ( new Dice ( new Die ( 3 ), 1 ) );
 		roller.labels.put ( 6, "Red" );
 		roller.labels.put ( 7, "Green" );
 		roller.labels.put ( 8, "Blue" );
@@ -166,11 +171,11 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Trig";
-		roller.expression = Roller.jexlEngine.createExpression ( "( DICE1 + 1 ) * 2" );
-		roller.dice.put ( "DICE1", new Dice ( new Die ( 3 ), 1 ) );
+		roller.expression = new Function ( lua, "return ( A + 1 ) * 2" );
+		roller.dice.add ( new Dice ( new Die ( 3 ), 1 ) );
 
-		roller.triggers.put ( "Big", Roller.jexlEngine.createExpression ( "OUTCOME >= 6" ) );
-		roller.triggers.put ( "Three", Roller.jexlEngine.createExpression ( "DICE1 == 3" ) );
+		roller.triggers.put ( "Big", new Function ( lua, "return OUTCOME >= 6" ) );
+		roller.triggers.put ( "Three", new Function ( lua, "return A == 3" ) );
 		
 		roller.roll ();
 		
@@ -207,10 +212,10 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Two";
-		roller.expression = Roller.jexlEngine.createExpression ( "DICE1+DICE2" );
+		roller.expression = new Function ( lua, "return A+B" );
 		
-		roller.dice.put ( "DICE1", new Dice ( new Die ( 4 ), 1 ) );
-		roller.dice.put ( "DICE2", new Dice ( new Die ( 6 ), 3 ) );
+		roller.dice.add ( new Dice ( new Die ( 4 ), 1 ) );
+		roller.dice.add ( new Dice ( new Die ( 6 ), 3 ) );
 		
 		roller.roll ();
 		
@@ -259,12 +264,12 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Var";
-		roller.expression = Roller.jexlEngine.createExpression ( "(AA*DICE1)+BB" );
+		roller.expression = new Function ( lua, "return V1 * A + V2" );
 		
-		roller.dice.put ( "DICE1", new Dice ( new Die ( 4 ), 1 ) );
+		roller.dice.add ( new Dice ( new Die ( 4 ), 1 ) );
 
-		roller.variables.put ( "AA", new SimpleIntegerProperty ( 1 ) );
-		roller.variables.put ( "BB", new SimpleIntegerProperty ( 0 ) );
+		roller.variables.put ( "V1", new SimpleIntegerProperty ( 1 ) );
+		roller.variables.put ( "V2", new SimpleIntegerProperty ( 0 ) );
 		
 		roller.roll ();
 		
@@ -284,7 +289,7 @@ public class RollerTest
 		assertEquals ( "",       History.history ().historyProperty ().get ( 1 ).triggersProperty ().get () );
 		assertEquals ( "[3]",    History.history ().historyProperty ().get ( 1 ).facesProperty ().get () );
 		
-		roller.variableProperty ( "AA" ).set ( 2 );
+		roller.variableProperty ( "V1" ).set ( 2 );
 		roller.roll (); 
 
 		assertEquals ( "6",           roller.outcomeProperty ().get () );
@@ -304,7 +309,7 @@ public class RollerTest
 		assertEquals ( "", History.history ().historyProperty ().get ( 4 ).triggersProperty ().get () );
 		assertEquals ( "[2]",        History.history ().historyProperty ().get ( 4 ).facesProperty ().get () );
 		
-		roller.variableProperty ( "BB" ).set ( 17 );
+		roller.variableProperty ( "V2" ).set ( 17 );
 		roller.roll ();
 
 		assertEquals ( "25",          roller.outcomeProperty ().get () );
