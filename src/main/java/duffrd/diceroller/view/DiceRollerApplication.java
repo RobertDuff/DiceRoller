@@ -3,7 +3,12 @@ package duffrd.diceroller.view;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
+import duffrd.diceroller.model.RollerModel;
+import duffrd.diceroller.model.SqliteRollerModel;
 import javafx.animation.PauseTransition;
 import javafx.animation.Transition;
 import javafx.application.Application;
@@ -28,6 +33,8 @@ public class DiceRollerApplication extends Application
 
 	public static Properties applicationProperties;
 
+	public RollerModel model;
+	
 	public static void main ( String[] args )
 	{
 		DiceRollerApplication.launch ( args );
@@ -53,6 +60,17 @@ public class DiceRollerApplication extends Application
 	{
 		if ( applicationProperties.getProperty ( SHOW_SPLASH_SCREEN_PROPERTY_KEY, "yes" ).matches ( "(?i:y|yes|t|true)" ) )
 		{
+		    FutureTask<RollerModel> modelTask = new FutureTask<RollerModel>(
+		            new Callable<RollerModel>()
+		            {
+                        @Override
+                        public RollerModel call () throws Exception
+                        {
+                            return new SqliteRollerModel();
+                        }		                
+		            }
+		            );
+		    
 			URL splashImageURL = getClass().getResource ( "splash.bmp" );
 			Image splashImage = new Image ( splashImageURL.toExternalForm () );
 			ImageView splashImageView = new ImageView ( splashImage );
@@ -63,6 +81,20 @@ public class DiceRollerApplication extends Application
 
 			splashTransition.setOnFinished ( e -> 
 			{ 
+			    try
+                {
+                    model = modelTask.get ();
+                }
+                catch ( InterruptedException e1 )
+                {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                catch ( ExecutionException e1 )
+                {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 				splashStage.close (); 
 				openMainStage();
 			} );
@@ -74,9 +106,16 @@ public class DiceRollerApplication extends Application
 			splashStage.setScene ( splashScene );
 			splashStage.initStyle ( StageStyle.TRANSPARENT );
 			splashStage.show();
+			
+			Thread modelThread = new Thread ( modelTask );
+			modelThread.setDaemon ( true );
+			modelThread.start ();
 		}
 		else
-			openMainStage ();
+		{
+		    model = new SqliteRollerModel ();
+		    openMainStage ();
+		}
 	}
 	
 	public void openMainStage()
@@ -86,9 +125,8 @@ public class DiceRollerApplication extends Application
 			Stage mainStage = new Stage ( StageStyle.DECORATED );
 
 			FXMLLoader mainWindowLoader = new FXMLLoader ( getClass().getResource ( "MainWindow.fxml" ) );
+			mainWindowLoader.setController ( new MainWindowController ( model ) );
 			Pane mainWindowPane = mainWindowLoader.load();
-
-			ObserverEventBus.post ( mainStage.titleProperty () );
 			
 			Scene mainScene = new Scene ( mainWindowPane );
 			mainStage.setScene ( mainScene );

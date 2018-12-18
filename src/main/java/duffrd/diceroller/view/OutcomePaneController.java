@@ -3,9 +3,8 @@ package duffrd.diceroller.view;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import com.google.common.eventbus.Subscribe;
-
 import duffrd.diceroller.model.History;
+import duffrd.diceroller.model.HistoryEntry;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -17,8 +16,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 import javafx.util.Duration;
-import duffrd.diceroller.model.HistoryEntry;
-import duffrd.diceroller.view.ObserverEventBus.Event;
 
 public class OutcomePaneController implements Initializable
 {
@@ -36,22 +33,6 @@ public class OutcomePaneController implements Initializable
 	 */
 	private Animation animation;
 
-	public OutcomePaneController ()
-	{
-		ObserverEventBus.register ( this );
-	}
-
-	@Subscribe
-	public void handleEvent ( Event event )
-	{
-		switch ( event )
-		{
-			case CLOSE_FILE:
-				setProperties ( null, null );
-				break;
-		}
-	}
-	
 	public void setProperties ( ReadOnlyStringProperty outcomeProperty, ReadOnlyStringProperty triggerProperty )
 	{
 		if ( outcomeProperty == null )

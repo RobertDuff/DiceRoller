@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.luaj.vm2.Globals;
 
-import javafx.beans.property.SimpleIntegerProperty;
 import utility.lua.Function;
 import utility.lua.LuaProvider;
 
@@ -29,6 +28,7 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Simple";
+        roller.lua = lua;
 		roller.expression = new Function ( lua, "return A" );
 		roller.dice.add ( new Dice ( new Die ( 6 ), 1 ) );
 		
@@ -67,6 +67,7 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Bool";
+        roller.lua = lua;
 		roller.expression = new Function ( lua, "return A > 10" );
 		roller.dice.add ( new Dice ( new Die ( 20 ), 1 ) );
 		
@@ -97,7 +98,9 @@ public class RollerTest
 		Roller roller = new Roller ();
 		
 		roller.rollerName = "Test";
+        roller.lua = lua;
 		roller.expression = new Function ( lua, "return A > 10" );
+		roller.booleanOutcome = true;
 		roller.dice.add ( new Dice ( new Die ( 20 ), 1 ) );
 		
 		roller.labels.put ( false, "Failure" );
@@ -130,6 +133,7 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Named";
+        roller.lua = lua;
 		roller.expression = new Function ( lua, "return A+5" );
 		roller.dice.add ( new Dice ( new Die ( 3 ), 1 ) );
 		roller.labels.put ( 6, "Red" );
@@ -171,11 +175,12 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Trig";
+        roller.lua = lua;
 		roller.expression = new Function ( lua, "return ( A + 1 ) * 2" );
 		roller.dice.add ( new Dice ( new Die ( 3 ), 1 ) );
 
-		roller.triggers.put ( "Big", new Function ( lua, "return OUTCOME >= 6" ) );
-		roller.triggers.put ( "Three", new Function ( lua, "return A == 3" ) );
+		roller.triggers.put ( "Big", new Roller.Expression ( "OUTCOME >= 6", new Function ( lua, "return OUTCOME >= 6" ) ) );
+		roller.triggers.put ( "Three", new Roller.Expression ( "A == 3", new Function ( lua, "return A == 3" ) ) );
 		
 		roller.roll ();
 		
@@ -212,6 +217,7 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Two";
+        roller.lua = lua;
 		roller.expression = new Function ( lua, "return A+B" );
 		
 		roller.dice.add ( new Dice ( new Die ( 4 ), 1 ) );
@@ -264,12 +270,13 @@ public class RollerTest
 		Roller roller = new Roller();
 		
 		roller.rollerName = "Var";
+		roller.lua = lua;
 		roller.expression = new Function ( lua, "return V1 * A + V2" );
 		
 		roller.dice.add ( new Dice ( new Die ( 4 ), 1 ) );
 
-		roller.variables.put ( "V1", new SimpleIntegerProperty ( 1 ) );
-		roller.variables.put ( "V2", new SimpleIntegerProperty ( 0 ) );
+		lua.set ( "V1", 1 );
+		lua.set ( "V2", 0 );
 		
 		roller.roll ();
 		
@@ -289,7 +296,8 @@ public class RollerTest
 		assertEquals ( "",       History.history ().historyProperty ().get ( 1 ).triggersProperty ().get () );
 		assertEquals ( "[3]",    History.history ().historyProperty ().get ( 1 ).facesProperty ().get () );
 		
-		roller.variableProperty ( "V1" ).set ( 2 );
+		lua.set ( "V1", 2 );
+		
 		roller.roll (); 
 
 		assertEquals ( "6",           roller.outcomeProperty ().get () );
@@ -309,7 +317,8 @@ public class RollerTest
 		assertEquals ( "", History.history ().historyProperty ().get ( 4 ).triggersProperty ().get () );
 		assertEquals ( "[2]",        History.history ().historyProperty ().get ( 4 ).facesProperty ().get () );
 		
-		roller.variableProperty ( "V2" ).set ( 17 );
+		lua.set ( "V2", 17 );
+		
 		roller.roll ();
 
 		assertEquals ( "25",          roller.outcomeProperty ().get () );

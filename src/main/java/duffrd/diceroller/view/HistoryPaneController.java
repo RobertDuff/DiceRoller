@@ -4,12 +4,9 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
 
-import com.google.common.eventbus.Subscribe;
-
 import duffrd.diceroller.model.History;
 import duffrd.diceroller.model.HistoryEntry;
 import duffrd.diceroller.model.HistoryTime;
-import duffrd.diceroller.view.ObserverEventBus.Event;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.transformation.FilteredList;
@@ -51,22 +48,6 @@ public class HistoryPaneController implements Initializable
 	
 	@FXML
 	public TableColumn<HistoryEntry,String> historyTableFacesColumn;
-	
-	public HistoryPaneController ()
-	{
-		ObserverEventBus.register ( this );
-	}
-
-	@Subscribe
-	public void handleEvent ( Event event )
-	{
-		switch ( event )
-		{
-			case CLOSE_FILE:
-				History.history ().clear ();
-				break;
-		}
-	}
 	
 	@Override
 	public void initialize ( URL location, ResourceBundle resources )

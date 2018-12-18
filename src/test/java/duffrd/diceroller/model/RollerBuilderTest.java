@@ -23,11 +23,5 @@ public class RollerBuilderTest
 	@Test
 	public void testSimpleStandard ()
 	{
-		def.put ( "name",       "Fred" );
-		def.put ( "definition", "6 * ( -3,5D8 - 2d[6,7:3] ) + ADJUST" );
-		
-		Roller roller = RollerBuilder.build ( def );
-		
-		System.out.println ( roller.toString () );
 	}
 }

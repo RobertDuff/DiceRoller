@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.AnchorPane?>
 
-<AnchorPane prefHeight="600.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="duffrd.diceroller.view.MainWindowController">
+<AnchorPane prefHeight="600.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
@@ -13,13 +13,6 @@
               <menus>
                 <Menu fx:id="fileMenu" mnemonicParsing="false" text="File">
                   <items>
-                        <MenuItem accelerator="CTRL+N" mnemonicParsing="false" onAction="#newFile" text="New" />
-                        <MenuItem accelerator="CTRL+O" mnemonicParsing="false" onAction="#openFile" text="Open" />
-                        <MenuItem accelerator="CTRL+S" mnemonicParsing="false" onAction="#saveFile" text="Save" />
-                        <MenuItem mnemonicParsing="false" onAction="#saveFileAs" text="Save As..." />
-                    <MenuItem accelerator="CTRL+W" mnemonicParsing="false" onAction="#closeFile" text="Close" />
-                        <SeparatorMenuItem fx:id="recentBeginSeparator" mnemonicParsing="false" />
-                        <SeparatorMenuItem fx:id="recentEndSeparator" mnemonicParsing="false" />
                         <MenuItem accelerator="F4" mnemonicParsing="false" onAction="#exit" text="Exit" />
                   </items>
                 </Menu>
