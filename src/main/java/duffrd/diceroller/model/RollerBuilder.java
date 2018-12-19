@@ -41,7 +41,7 @@ public class RollerBuilder
         
         String luaCode = def;
         
-        DieNameSequence seq = new DieNameSequence();
+        int argIndex = 1;
         Matcher matcher;
         
         while ( ( matcher = DICE_REGEX.matcher ( luaCode ) ).find () )
@@ -102,11 +102,11 @@ public class RollerBuilder
             
             Dice dice = new Dice ( die, num, start, end );
                         
-            luaCode = luaCode.replace ( matcher.group (), seq.next() );
+            luaCode = luaCode.replace ( matcher.group (), "dice[" + argIndex++ + "]" );
             roller.dice.add ( dice );
         }
         
-        roller.expression = new Function ( roller.lua, "return ", luaCode );
+        roller.expression = new Function ( roller.lua, "local dice = {...}", "return ", luaCode );
         
         return this;
     }
@@ -129,7 +129,20 @@ public class RollerBuilder
     
     public RollerBuilder addTrigger ( String name, String def )
     {
-        roller.triggers.put ( name, new Roller.Expression ( def, new Function ( roller.lua, "print ( 'A=', A )", "return ", def ) ) );
+        roller.triggers.put ( name, new Roller.Expression ( def, new Function ( roller.lua, 
+                "local __ARGS__ = { ... }",
+                "local OUTCOME = __ARGS__[ 1 ]",
+                "local A = __ARGS__[ 2 ]",
+                "local B = __ARGS__[ 3 ]",
+                "local C = __ARGS__[ 4 ]",
+                "local D = __ARGS__[ 5 ]",
+                "local E = __ARGS__[ 6 ]",
+                "local F = __ARGS__[ 7 ]",
+                "local G = __ARGS__[ 8 ]",
+                "local H = __ARGS__[ 9 ]",
+                "local I = __ARGS__[ 10 ]",
+                "local H = __ARGS__[ 11 ]",
+                "return ", def ) ) );
         return this;
     }
     

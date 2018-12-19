@@ -14,6 +14,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import utility.join.Join;
 import utility.lua.Function;
+import utility.lua.VarargsBuilder;
 
 public class Roller
 {
@@ -62,6 +63,16 @@ public class Roller
 		return definition;
 	}
 	
+	public Map<Object,String> labels()
+	{
+	    return labels;
+	}
+	
+	public long[] probabilities()
+	{
+        return null;
+	}
+	
 	public ReadOnlyStringProperty outcomeProperty()
 	{
 		return outcomeProperty;
@@ -71,25 +82,26 @@ public class Roller
 	{
 		return triggersProperty;
 	}
-	
+		
 	public void roll()
 	{
 		StringBuilder historyFacesBuilder = new StringBuilder();
 		// Roll Each Dice
-				
-		DieNameSequence seq = new DieNameSequence();
+						
+		VarargsBuilder outcomeArgs = new VarargsBuilder();
 		
 		for ( Dice die : dice )
 		{
 			DiceOutcome diceOutcome = die.roll ();
 			historyFacesBuilder.append ( diceOutcome.faces.toString () );
 		
-			lua.set ( seq.next(), diceOutcome.outcome );
+			outcomeArgs.add ( diceOutcome.outcome );
 		}
 		
 		// Calculate Outcome
-		LuaValue rawOutcome = expression.call();
-		lua.set ( "OUTCOME", rawOutcome );
+		LuaValue rawOutcome = expression.call ( outcomeArgs.build () );
+		VarargsBuilder triggerArgs = new VarargsBuilder ();
+		triggerArgs.add ( rawOutcome ).add ( outcomeArgs.build () );
 		
 		// Get Outcome String
 		String outcome = rawOutcome.tojstring();
@@ -103,7 +115,7 @@ public class Roller
 		List<String> triggerList = new ArrayList<>();
 		
 		for ( String triggerName : triggers.keySet () )
-			if ( ( Boolean ) triggers.get ( triggerName ).function.call().toboolean() == true )
+			if ( ( Boolean ) triggers.get ( triggerName ).function.call ( triggerArgs.build() ).toboolean() == true )
 				triggerList.add ( triggerName );
 		
 		String triggerString = Join.join ( ", ", triggerList );

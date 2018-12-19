@@ -8,12 +8,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.luaj.vm2.Globals;
 
-import utility.lua.Function;
 import utility.lua.LuaProvider;
 
 public class RollerTest
 {
-	public static final Globals lua = LuaProvider.lua();
+	public static final Globals lua = LuaProvider.lua ( "x" );
 	
 	@Before
 	public void before()
@@ -23,15 +22,9 @@ public class RollerTest
 	}
 	
 	@Test
-	public void testSimpleInteger ()
+	public void testSimpleInteger () throws DiceRollerException
 	{
-		Roller roller = new Roller();
-		
-		roller.rollerName = "Simple";
-        roller.lua = lua;
-		roller.expression = new Function ( lua, "return A" );
-		roller.dice.add ( new Dice ( new Die ( 6 ), 1 ) );
-		
+		Roller roller = new RollerBuilder().group ( "x" ).name ( "Simple" ).definition ( "d6" ).build ();		
 		roller.roll ();
 		
 		assertEquals ( "2",      roller.outcomeProperty ().get () );
@@ -62,15 +55,9 @@ public class RollerTest
 	}
 	
 	@Test
-	public void testSimpleBoolean ()
+	public void testSimpleBoolean () throws DiceRollerException
 	{
-		Roller roller = new Roller();
-		
-		roller.rollerName = "Bool";
-        roller.lua = lua;
-		roller.expression = new Function ( lua, "return A > 10" );
-		roller.dice.add ( new Dice ( new Die ( 20 ), 1 ) );
-		
+		Roller roller = new RollerBuilder().group ( "x" ).name ( "Bool" ).definition ( "d20 > 10" ).build();		
 		roller.roll ();
 		
 		assertEquals ( "false",  roller.outcomeProperty ().get () );
@@ -93,15 +80,9 @@ public class RollerTest
 	}
 	
 	@Test
-	public void testSuccess ()
+	public void testSuccess () throws DiceRollerException
 	{
-		Roller roller = new Roller ();
-		
-		roller.rollerName = "Test";
-        roller.lua = lua;
-		roller.expression = new Function ( lua, "return A > 10" );
-		roller.booleanOutcome = true;
-		roller.dice.add ( new Dice ( new Die ( 20 ), 1 ) );
+		Roller roller = new RollerBuilder().group ( "x" ).name ( "Test" ).definition ( "d20 > 10" ).addLabel ( 0, "Failure" ).addLabel ( 1, "Success" ).build();
 		
 		roller.labels.put ( false, "Failure" );
 		roller.labels.put ( true,  "Success" );
@@ -128,18 +109,9 @@ public class RollerTest
 	}
 	
 	@Test
-	public void testNamed ()
+	public void testNamed () throws DiceRollerException
 	{
-		Roller roller = new Roller();
-		
-		roller.rollerName = "Named";
-        roller.lua = lua;
-		roller.expression = new Function ( lua, "return A+5" );
-		roller.dice.add ( new Dice ( new Die ( 3 ), 1 ) );
-		roller.labels.put ( 6, "Red" );
-		roller.labels.put ( 7, "Green" );
-		roller.labels.put ( 8, "Blue" );
-		
+		Roller roller = new RollerBuilder().group ( "x" ).name ( "Named" ).definition ( "d3+5" ).addLabel ( 6, "Red" ).addLabel ( 7, "Green" ).addLabel ( 8, "Blue" ).build ();
 		roller.roll ();
 		
 		assertEquals ( "Green",  roller.outcomeProperty ().get () );
@@ -170,18 +142,9 @@ public class RollerTest
 	}
 	
 	@Test
-	public void testTriggered ()
+	public void testTriggered () throws DiceRollerException
 	{
-		Roller roller = new Roller();
-		
-		roller.rollerName = "Trig";
-        roller.lua = lua;
-		roller.expression = new Function ( lua, "return ( A + 1 ) * 2" );
-		roller.dice.add ( new Dice ( new Die ( 3 ), 1 ) );
-
-		roller.triggers.put ( "Big", new Roller.Expression ( "OUTCOME >= 6", new Function ( lua, "return OUTCOME >= 6" ) ) );
-		roller.triggers.put ( "Three", new Roller.Expression ( "A == 3", new Function ( lua, "return A == 3" ) ) );
-		
+		Roller roller = new RollerBuilder().group ( "x" ).name ( "Trig" ).definition ( "( d3 + 1 ) * 2" ).addTrigger ( "Big", "OUTCOME >= 6" ).addTrigger ( "Three", "A == 3" ).build ();		
 		roller.roll ();
 		
 		assertEquals ( "6",      roller.outcomeProperty ().get () );
@@ -212,17 +175,9 @@ public class RollerTest
 	}
 	
 	@Test
-	public void testTwo ()
+	public void testTwo () throws DiceRollerException
 	{
-		Roller roller = new Roller();
-		
-		roller.rollerName = "Two";
-        roller.lua = lua;
-		roller.expression = new Function ( lua, "return A+B" );
-		
-		roller.dice.add ( new Dice ( new Die ( 4 ), 1 ) );
-		roller.dice.add ( new Dice ( new Die ( 6 ), 3 ) );
-		
+		Roller roller = new RollerBuilder().group ( "x" ).name ( "Two" ).definition ( "d4 + 3d6" ).build();
 		roller.roll ();
 		
 		assertEquals ( "11",  roller.outcomeProperty ().get () );
@@ -265,15 +220,9 @@ public class RollerTest
 	}
 	
 	@Test
-	public void testVar()
+	public void testVar() throws DiceRollerException
 	{
-		Roller roller = new Roller();
-		
-		roller.rollerName = "Var";
-		roller.lua = lua;
-		roller.expression = new Function ( lua, "return V1 * A + V2" );
-		
-		roller.dice.add ( new Dice ( new Die ( 4 ), 1 ) );
+		Roller roller = new RollerBuilder ().group ( "x" ).name ( "Var" ).definition ( "V1 * d4 + V2" ).build();
 
 		lua.set ( "V1", 1 );
 		lua.set ( "V2", 0 );
