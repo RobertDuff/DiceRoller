@@ -12,7 +12,7 @@ public class Die
 {
 	int faces;
 	List<Integer> range;
-	int[] probabilities;
+	long[] probabilities;
 	
 	/**
 	 * Creates a standard die.
@@ -24,7 +24,7 @@ public class Die
 		
 		range = IntStream.rangeClosed ( 1, faces ).boxed ().collect ( Collectors.toList () );
 		
-		probabilities = new int[ faces+1 ];
+		probabilities = new long[ faces+1 ];
 		probabilities[ 0 ] = 0;
 		
 		Arrays.fill ( probabilities, 1, probabilities.length, 1 );
@@ -39,7 +39,7 @@ public class Die
 		faces = distribution.values ().stream ().mapToInt ( Integer::intValue ).sum();
 		range = distribution.keySet ().stream ().sorted ().collect ( Collectors.toList () );
 		
-		probabilities = new int[ range.get ( range.size ()-1 ) + 1 ];
+		probabilities = new long[ range.get ( range.size ()-1 ) + 1 ];
 		Arrays.fill ( probabilities, 0 );
 		
 		for ( Integer face : distribution.keySet () )

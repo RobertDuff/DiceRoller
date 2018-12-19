@@ -21,9 +21,9 @@ public class DieTest
 	public Map<Integer,Integer> distribution;
 	public int expectedFaces;
 	public List<Integer> expectedRange;
-	public int[] expectedPropbabilities;
+	public long[] expectedPropbabilities;
 	
-	public DieTest ( Integer f, Map<Integer,Integer> d, int ef, List<Integer> er, int[] ep )
+	public DieTest ( Integer f, Map<Integer,Integer> d, int ef, List<Integer> er, long[] ep )
 	{
 		faces                  = f;
 		distribution           = d;
@@ -59,7 +59,7 @@ public class DieTest
 					null, 
 					4, 
 					Arrays.asList ( 1, 2, 3, 4 ), 
-					new int[] { 0, 1, 1, 1, 1 }	
+					new long[] { 0, 1, 1, 1, 1 }	
 				} );
 		
 		// d6
@@ -69,7 +69,7 @@ public class DieTest
 					null, 
 					6, 
 					Arrays.asList ( 1, 2, 3, 4, 5, 6 ), 
-					new int[] { 0, 1, 1, 1, 1, 1, 1 }	
+					new long[] { 0, 1, 1, 1, 1, 1, 1 }	
 				} );
 		
 		// d10
@@ -79,7 +79,7 @@ public class DieTest
 					null, 
 					10, 
 					Arrays.asList ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ), 
-					new int[] { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }	
+					new long[] { 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }	
 				} );
 		
 		// Weighted
@@ -89,7 +89,7 @@ public class DieTest
 					distMap ( 3, 8 ), 
 					8, 
 					Arrays.asList ( 3 ), 
-					new int[] { 0, 0, 0, 8 }	
+					new long[] { 0, 0, 0, 8 }	
 				} );
 		
 		// Weighted
@@ -99,7 +99,7 @@ public class DieTest
 					distMap ( 1, 3, 2, 2, 3, 1 ), 
 					6, 
 					Arrays.asList ( 1, 2, 3 ), 
-					new int[] { 0, 3, 2, 1 }	
+					new long[] { 0, 3, 2, 1 }	
 				} );
 		
 		// Weighted
@@ -109,7 +109,7 @@ public class DieTest
 					distMap ( 0, 123, 15, 76, 33, 2009 ), 
 					123+76+2009, 
 					Arrays.asList ( 0, 15, 33 ), 
-					new int[] { 123, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2009 }	
+					new long[] { 123, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 76, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2009 }	
 				} );
 		
 		return parameters.toArray ();
