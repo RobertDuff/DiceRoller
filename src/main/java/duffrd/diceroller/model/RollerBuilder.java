@@ -37,7 +37,6 @@ public class RollerBuilder
     public RollerBuilder definition ( String def ) throws DiceRollerException
     {
         roller.definition = def;
-        roller.booleanOutcome = COMPARISON_REGEX.matcher ( def ).find ();
         
         String luaCode = def;
         
@@ -57,9 +56,9 @@ public class RollerBuilder
             {
                 Map<Integer,Integer> distribution = new HashMap<>();
                 
-                for ( String weight : weights.split ( "\\s*,\\s*" ) )
+                for ( String weight : weights.trim().split ( "\\s*,\\s*" ) )
                 {
-                    String[] valCount = weight.split ( "\\s*:\\s*" );
+                    String[] valCount = weight.trim().split ( "\\s*:\\s*" );
                     
                     if ( valCount.length == 2 )
                     {
@@ -111,19 +110,9 @@ public class RollerBuilder
         return this;
     }
     
-    public RollerBuilder outcomeIsBoolean ( boolean state )
-    {
-        roller.booleanOutcome = state;
-        return this;
-    }
-    
     public RollerBuilder addLabel ( int value, String label )
     {
-        if ( roller.booleanOutcome )
-            roller.labels.put ( value==1, label );
-        else
-            roller.labels.put ( value, label );
-        
+        roller.labels.put ( value, label );
         return this;
     }
     

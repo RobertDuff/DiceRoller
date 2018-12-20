@@ -106,7 +106,7 @@ public class SqliteRollerModel implements RollerModel
     {
         try
         {
-            PreparedStatement r = sql.prepareStatement ( "select id, rollerName, definition, booleanOutcome from rollers where groupName=? order by sequence" );
+            PreparedStatement r = sql.prepareStatement ( "select id, rollerName, definition from rollers where groupName=? order by sequence" );
             
             r.setString ( 1, group );
             
@@ -118,7 +118,7 @@ public class SqliteRollerModel implements RollerModel
             {
                 RollerBuilder builder = new RollerBuilder();
                 
-                builder.group ( group ).name ( rs.getString ( 2 ) ).definition ( rs.getString ( 3 ) ).outcomeIsBoolean ( rs.getBoolean ( 4 ) );
+                builder.group ( group ).name ( rs.getString ( 2 ) ).definition ( rs.getString ( 3 ) );
                 
                 int rollerId = rs.getInt ( 1 );
                 

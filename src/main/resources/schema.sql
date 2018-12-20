@@ -6,7 +6,6 @@ create table rollers
 	groupName text not null,
 	rollerName text not null,
 	definition text not null,
-	booleanOutcome boolean default 0,
 	sequence integer,
 	unique ( groupName, rollerName )
 );

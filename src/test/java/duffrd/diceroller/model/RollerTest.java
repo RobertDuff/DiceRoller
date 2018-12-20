@@ -1,5 +1,6 @@
 package duffrd.diceroller.model;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
@@ -24,7 +25,10 @@ public class RollerTest
 	@Test
 	public void testSimpleInteger () throws DiceRollerException
 	{
-		Roller roller = new RollerBuilder().group ( "x" ).name ( "Simple" ).definition ( "d6" ).build ();		
+		Roller roller = new RollerBuilder().group ( "x" ).name ( "Simple" ).definition ( "d6" ).build ();
+		
+		assertArrayEquals ( new long[] { 0, 1, 1, 1, 1, 1, 1 }, roller.probabilities () );
+		
 		roller.roll ();
 		
 		assertEquals ( "2",      roller.outcomeProperty ().get () );
@@ -58,12 +62,15 @@ public class RollerTest
 	public void testSimpleBoolean () throws DiceRollerException
 	{
 		Roller roller = new RollerBuilder().group ( "x" ).name ( "Bool" ).definition ( "d20 > 10" ).build();		
+
+		assertArrayEquals ( new long[] { 10, 10 }, roller.probabilities () );
+		
 		roller.roll ();
 		
-		assertEquals ( "false",  roller.outcomeProperty ().get () );
+		assertEquals ( "0",      roller.outcomeProperty ().get () );
 		assertEquals ( "",       roller.triggersProperty ().get () );
 		assertEquals ( "Bool",   History.history ().historyProperty ().get ( 0 ).rollerNameProperty ().get () );
-		assertEquals ( "false",  History.history ().historyProperty ().get ( 0 ).outcomeProperty ().get () );
+		assertEquals ( "0",      History.history ().historyProperty ().get ( 0 ).outcomeProperty ().get () );
 		assertEquals ( "",       History.history ().historyProperty ().get ( 0 ).triggersProperty ().get () );
 		assertEquals ( "[4]",    History.history ().historyProperty ().get ( 0 ).facesProperty ().get () );
 		
@@ -71,12 +78,12 @@ public class RollerTest
 		roller.roll ();
 		roller.roll ();
 		
-		assertEquals ( "true",      roller.outcomeProperty ().get () );
+		assertEquals ( "1",      roller.outcomeProperty ().get () );
 		assertEquals ( "",       roller.triggersProperty ().get () );
-		assertEquals ( "Bool", History.history ().historyProperty ().get ( 3 ).rollerNameProperty ().get () );
-		assertEquals ( "true",      History.history ().historyProperty ().get ( 3 ).outcomeProperty ().get () );
+		assertEquals ( "Bool",   History.history ().historyProperty ().get ( 3 ).rollerNameProperty ().get () );
+		assertEquals ( "1",      History.history ().historyProperty ().get ( 3 ).outcomeProperty ().get () );
 		assertEquals ( "",       History.history ().historyProperty ().get ( 3 ).triggersProperty ().get () );
-		assertEquals ( "[13]",    History.history ().historyProperty ().get ( 3 ).facesProperty ().get () );
+		assertEquals ( "[13]",   History.history ().historyProperty ().get ( 3 ).facesProperty ().get () );
 	}
 	
 	@Test
@@ -84,8 +91,10 @@ public class RollerTest
 	{
 		Roller roller = new RollerBuilder().group ( "x" ).name ( "Test" ).definition ( "d20 > 10" ).addLabel ( 0, "Failure" ).addLabel ( 1, "Success" ).build();
 		
-		roller.labels.put ( false, "Failure" );
-		roller.labels.put ( true,  "Success" );
+		assertArrayEquals ( new long[] { 10, 10 }, roller.probabilities () );
+
+		roller.labels.put ( 0, "Failure" );
+		roller.labels.put ( 1,  "Success" );
 		
 		roller.roll ();
 		
@@ -112,6 +121,9 @@ public class RollerTest
 	public void testNamed () throws DiceRollerException
 	{
 		Roller roller = new RollerBuilder().group ( "x" ).name ( "Named" ).definition ( "d3+5" ).addLabel ( 6, "Red" ).addLabel ( 7, "Green" ).addLabel ( 8, "Blue" ).build ();
+	      
+		assertArrayEquals ( new long[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 }, roller.probabilities () );
+
 		roller.roll ();
 		
 		assertEquals ( "Green",  roller.outcomeProperty ().get () );
@@ -145,6 +157,9 @@ public class RollerTest
 	public void testTriggered () throws DiceRollerException
 	{
 		Roller roller = new RollerBuilder().group ( "x" ).name ( "Trig" ).definition ( "( d3 + 1 ) * 2" ).addTrigger ( "Big", "OUTCOME >= 6" ).addTrigger ( "Three", "A == 3" ).build ();		
+		
+		assertArrayEquals ( new long[] { 0, 0, 0, 0, 1, 0, 1, 0, 1 }, roller.probabilities () );
+
 		roller.roll ();
 		
 		assertEquals ( "6",      roller.outcomeProperty ().get () );
@@ -178,6 +193,9 @@ public class RollerTest
 	public void testTwo () throws DiceRollerException
 	{
 		Roller roller = new RollerBuilder().group ( "x" ).name ( "Two" ).definition ( "d4 + 3d6" ).build();
+		
+		assertArrayEquals ( new long[] { 0, 0, 0, 0, 1, 4, 10, 20, 34, 52, 71, 88, 100, 104, 100, 88, 71, 52, 34, 20, 10, 4, 1 }, roller.probabilities () );
+		
 		roller.roll ();
 		
 		assertEquals ( "11",  roller.outcomeProperty ().get () );
@@ -227,6 +245,8 @@ public class RollerTest
 		lua.set ( "V1", 1 );
 		lua.set ( "V2", 0 );
 		
+		assertArrayEquals ( new long[] { 0, 1, 1, 1, 1 }, roller.probabilities () );
+
 		roller.roll ();
 		
 		assertEquals ( "2",  roller.outcomeProperty ().get () );
@@ -246,7 +266,9 @@ public class RollerTest
 		assertEquals ( "[3]",    History.history ().historyProperty ().get ( 1 ).facesProperty ().get () );
 		
 		lua.set ( "V1", 2 );
-		
+
+		assertArrayEquals ( new long[] { 0, 0, 1, 0, 1, 0, 1, 0, 1 }, roller.probabilities ( true ) );
+
 		roller.roll (); 
 
 		assertEquals ( "6",           roller.outcomeProperty ().get () );
@@ -268,6 +290,8 @@ public class RollerTest
 		
 		lua.set ( "V2", 17 );
 		
+		assertArrayEquals ( new long[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1 }, roller.probabilities ( true ) );
+
 		roller.roll ();
 
 		assertEquals ( "25",          roller.outcomeProperty ().get () );
@@ -277,4 +301,57 @@ public class RollerTest
 		assertEquals ( "", History.history ().historyProperty ().get ( 5 ).triggersProperty ().get () );
 		assertEquals ( "[4]",        History.history ().historyProperty ().get ( 5 ).facesProperty ().get () );
 	}
+    
+    @Test
+    public void testSimpleWeighted() throws DiceRollerException
+    {
+        Roller roller = new RollerBuilder().group ( "x" ).name ( "Weighted" ).definition ( "d[ 3, 7, 11 ]" ).addTrigger ( "Flag", "A <= 6" ).build();
+        
+        assertArrayEquals ( new long[] { 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1 }, roller.probabilities () );
+
+        roller.roll ();
+        
+        assertEquals ( "7",        roller.outcomeProperty ().get () );
+        assertEquals ( "",         roller.triggersProperty ().get () );
+        assertEquals ( "Weighted", History.history ().historyProperty ().get ( 0 ).rollerNameProperty ().get () );
+        assertEquals ( "7",        History.history ().historyProperty ().get ( 0 ).outcomeProperty ().get () );
+        assertEquals ( "",         History.history ().historyProperty ().get ( 0 ).triggersProperty ().get () );
+        assertEquals ( "[7]",      History.history ().historyProperty ().get ( 0 ).facesProperty ().get () );
+
+        roller.roll ();
+        roller.roll ();
+        
+        assertEquals ( "3",        roller.outcomeProperty ().get () );
+        assertEquals ( "Flag",     roller.triggersProperty ().get () );
+        assertEquals ( "Weighted", History.history ().historyProperty ().get ( 2 ).rollerNameProperty ().get () );
+        assertEquals ( "3",        History.history ().historyProperty ().get ( 2 ).outcomeProperty ().get () );
+        assertEquals ( "Flag",     History.history ().historyProperty ().get ( 2 ).triggersProperty ().get () );
+        assertEquals ( "[3]",      History.history ().historyProperty ().get ( 2 ).facesProperty ().get () );
+    }
+    
+    @Test
+    public void testMultipleWeighted() throws DiceRollerException
+    {
+        Roller roller = new RollerBuilder().group ( "x" ).name ( "Weighted" ).definition ( "3d[ 3, 7, 11 ]" ).addLabel ( 21, "Twenty-One" ).build();
+        
+        assertArrayEquals ( new long[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 6, 0, 0, 0, 7, 0, 0, 0, 6, 0, 0, 0, 3, 0, 0, 0, 1 }, roller.probabilities () );
+
+        roller.roll ();
+        
+        assertEquals ( "17",        roller.outcomeProperty ().get () );
+        assertEquals ( "",          roller.triggersProperty ().get () );
+        assertEquals ( "Weighted",  History.history ().historyProperty ().get ( 0 ).rollerNameProperty ().get () );
+        assertEquals ( "17",        History.history ().historyProperty ().get ( 0 ).outcomeProperty ().get () );
+        assertEquals ( "",          History.history ().historyProperty ().get ( 0 ).triggersProperty ().get () );
+        assertEquals ( "[3, 7, 7]", History.history ().historyProperty ().get ( 0 ).facesProperty ().get () );
+
+        roller.roll ();
+        
+        assertEquals ( "Twenty-One", roller.outcomeProperty ().get () );
+        assertEquals ( "",           roller.triggersProperty ().get () );
+        assertEquals ( "Weighted",   History.history ().historyProperty ().get ( 1 ).rollerNameProperty ().get () );
+        assertEquals ( "Twenty-One", History.history ().historyProperty ().get ( 1 ).outcomeProperty ().get () );
+        assertEquals ( "",           History.history ().historyProperty ().get ( 1 ).triggersProperty ().get () );
+        assertEquals ( "[3, 7, 11]", History.history ().historyProperty ().get ( 1 ).facesProperty ().get () );
+    }
 }

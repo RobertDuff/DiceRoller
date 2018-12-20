@@ -6,23 +6,23 @@ insert into rollerLabels values ( ( select id from rollers where rollerName='Coi
 
 -- Munchkin
 
-insert into rollers ( groupName, rollerName, definition, booleanOutcome ) values ( 'Munchkin', 'Escape-1', 'd6-1 >= 5', 1 );
+insert into rollers ( groupName, rollerName, definition ) values ( 'Munchkin', 'Escape-1', 'd6-1 >= 5' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape-1' ), 1, 'Escape' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape-1' ), 0, 'Bad Stuff' );
 
-insert into rollers ( groupName, rollerName, definition, booleanOutcome ) values ( 'Munchkin', 'Escape', 'd6 >= 5', 1 );
+insert into rollers ( groupName, rollerName, definition ) values ( 'Munchkin', 'Escape', 'd6 >= 5' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape' ), 1, 'Escape' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape' ), 0, 'Bad Stuff' );
 
-insert into rollers ( groupName, rollerName, definition, booleanOutcome ) values ( 'Munchkin', 'Escape+1', 'd6+1 >= 5', 1 );
+insert into rollers ( groupName, rollerName, definition ) values ( 'Munchkin', 'Escape+1', 'd6+1 >= 5' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape+1' ), 1, 'Escape' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape+1' ), 0, 'Bad Stuff' );
 
-insert into rollers ( groupName, rollerName, definition, booleanOutcome ) values ( 'Munchkin', 'Escape+2', 'd6+2 >= 5', 1 );
+insert into rollers ( groupName, rollerName, definition ) values ( 'Munchkin', 'Escape+2', 'd6+2 >= 5' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape+2' ), 1, 'Escape' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape+2' ), 0, 'Bad Stuff' );
 
-insert into rollers ( groupName, rollerName, definition, booleanOutcome ) values ( 'Munchkin', 'Escape+3', 'd6+3 >= 5', 1 );
+insert into rollers ( groupName, rollerName, definition ) values ( 'Munchkin', 'Escape+3', 'd6+3 >= 5' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape+3' ), 1, 'Escape' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Munchkin' and rollerName='Escape+3' ), 0, 'Bad Stuff' );
 
@@ -32,11 +32,11 @@ insert into rollers ( groupName, rollerName, definition ) values ( 'Dungeons and
 insert into rollerTriggers values ( ( select id from rollers where groupName = 'Dungeons and Dragons 3.5' and rollerName='Karma D20' ), 'Good Karma', 'A == 20' );
 insert into rollerTriggers values ( ( select id from rollers where groupName = 'Dungeons and Dragons 3.5' and rollerName='Karma D20' ), 'Bad Karma', 'A == 1' );
 
-insert into rollers ( groupName, rollerName, definition, booleanOutcome ) values ( 'Dungeons and Dragons 3.5', 'Good Karma Point', 'd20 >= 17', 1 );
+insert into rollers ( groupName, rollerName, definition ) values ( 'Dungeons and Dragons 3.5', 'Good Karma Point', 'd20 >= 17' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Dungeons and Dragons 3.5' and rollerName='Good Karma Point' ), 1, 'Bring On The Good Stuff' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Dungeons and Dragons 3.5' and rollerName='Good Karma Point' ), 0, 'Too Bad' );
 
-insert into rollers ( groupName, rollerName, definition, booleanOutcome ) values ( 'Dungeons and Dragons 3.5', 'Bad Karma Point', 'd20 <= 4', 1 );
+insert into rollers ( groupName, rollerName, definition ) values ( 'Dungeons and Dragons 3.5', 'Bad Karma Point', 'd20 <= 4' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Dungeons and Dragons 3.5' and rollerName='Bad Karma Point' ), 1, 'That''s Gonna Sting' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Dungeons and Dragons 3.5' and rollerName='Bad Karma Point' ), 0, 'Wheew' );
 
@@ -100,6 +100,6 @@ insert into rollers ( groupName, rollerName, definition ) values ( 'Hero System 
 
 --
 
--- insert into rollers ( groupName, rollerName, definition, booleanOutcome ) values ( '', '', '', 0 );
+-- insert into rollers ( groupName, rollerName, definition ) values ( '', '', '' );
 -- insert into rollerLabels values ( ( select id from rollers where groupName = '' and rollerName='' ), , '' );
 -- insert into rollerTriggers values ( ( select id from rollers where groupName = '' and rollerName='' ), '', '' );

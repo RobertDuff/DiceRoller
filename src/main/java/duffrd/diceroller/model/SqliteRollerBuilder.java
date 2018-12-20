@@ -37,12 +37,11 @@ public class SqliteRollerBuilder extends RollerBuilder
             // Create Roller
             //
             
-            PreparedStatement insertRoller = sql.prepareStatement ( "insert into rollers ( groupName, rollerName, definition, booleanOutcome ) values ( ?, ?, ?, ? )" );
+            PreparedStatement insertRoller = sql.prepareStatement ( "insert into rollers ( groupName, rollerName, definition ) values ( ?, ?, ?, ? )" );
             
             insertRoller.setString ( 1, roller.groupName );
             insertRoller.setString ( 2, roller.rollerName );
             insertRoller.setString ( 3, roller.definition );
-            insertRoller.setBoolean ( 4, roller.booleanOutcome );
             
             insertRoller.executeUpdate();
             

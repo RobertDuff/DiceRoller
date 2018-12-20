@@ -1,13 +1,9 @@
 package duffrd.diceroller.model;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import static utility.arrays.ArrayConverter.intArray;
 
-import static utility.arrays.ArrayConverter.*;
+import java.util.Arrays;
+
 import utility.math.Polynomial;
 
 public class Dice
@@ -17,7 +13,6 @@ public class Dice
     int start;
     int end;
 
-    List<Integer> range;
     long[] probabilities;
 
     public Dice ( Die die, int count )
@@ -32,34 +27,13 @@ public class Dice
 
         this.start = start;
         this.end   = end;
-
-        // Calculate Range
-
-        Set<Integer> rangeSet = new HashSet<Integer>();			
-
-        __genRange ( rangeSet, end - start, 0 );
-
-        range = new ArrayList<> ( rangeSet );
-        Collections.sort ( range );
-    }
-
-    private void __genRange ( Set<Integer> range, int count, int sum )
-    {
-        if ( count == 0 )
-        {
-            range.add ( sum );
-            return;
-        }
-
-        for ( Integer face : die.range )
-            __genRange ( range, count-1, sum+face );
     }
 
     public DiceOutcome roll()
     {
         return new DiceOutcome ( this );
     }
-
+    
     public long[] probabilities()
     { 
         if ( probabilities == null )
@@ -69,31 +43,29 @@ public class Dice
             //
             if ( start == 0 && end == count )
             {
-                Polynomial probabilities = new Polynomial ( die.probabilities );
+                Polynomial poly = new Polynomial ( die.probabilities );
                 Polynomial product = Polynomial.ONE;
 
                 for ( int i=0; i<count; i++ )
-                    product = product.multiply ( probabilities );
+                    product = product.multiply ( poly );
 
-                this.probabilities = product.coefficients ();
+                probabilities = product.coefficients ();
             }
             else
             {
                 int maxOutcome = die.range.get ( die.range.size ()-1 ) * ( end - start );
-                long[] probabilityDistribution = new long[ maxOutcome+1 ];
+                probabilities = new long[ maxOutcome+1 ];
                 
                 int[] rolls = new int[ count ];
                 
-                genProbProcessor ( probabilityDistribution, rolls, count );
-                
-                return probabilityDistribution;
+                genProbProcessor ( rolls, count );                
             }
         }
 
         return probabilities;
     }
 
-    private void genProbProcessor ( long[] probabilityDistribution, int[] rolls, int num )
+    private void genProbProcessor ( int[] rolls, int num )
     {
         if ( num == 0 )
         {
@@ -106,7 +78,7 @@ public class Dice
             Arrays.sort ( sorted );
             int sum = Arrays.asList ( sorted ).subList ( start, end ).stream ().mapToInt ( i -> i.intValue () ).sum ();
 
-            probabilityDistribution[ sum ] += count;                
+            probabilities[ sum ] += count;                
 
             return;
         }
@@ -114,7 +86,7 @@ public class Dice
         for ( int face : die.range )
         {
             rolls[ num-1 ] = face;
-            genProbProcessor ( probabilityDistribution, rolls, num-1 );
+            genProbProcessor ( rolls, num-1 );
         }
     }
     

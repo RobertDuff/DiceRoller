@@ -12,6 +12,7 @@ import org.luaj.vm2.LuaValue;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import utility.arrays.ArrayConverter;
 import utility.join.Join;
 import utility.lua.Function;
 import utility.lua.VarargsBuilder;
@@ -38,16 +39,17 @@ public class Roller
 
 	Globals lua;
 	Function expression;
-	boolean booleanOutcome;
 	
 	List<Dice> dice = new ArrayList<>();
 	
 	Map<String,Expression> triggers = new HashMap<>();
-	Map<Object,String> labels = new HashMap<>();
+	Map<Integer,String> labels = new HashMap<>();
 	
 	private StringProperty outcomeProperty = new SimpleStringProperty ();
 	private StringProperty triggersProperty = new SimpleStringProperty ();
     
+	private long[] probabilities;
+	
     public String group()
     {
         return groupName;
@@ -63,14 +65,59 @@ public class Roller
 		return definition;
 	}
 	
-	public Map<Object,String> labels()
+	public Map<Integer,String> labels()
 	{
 	    return labels;
 	}
 	
+	public long[] probabilities ( boolean recalculate )
+	{
+        if ( probabilities == null || recalculate )
+        {
+            Map<Integer,Long> prob = new HashMap<>();
+            
+            int rolls[] = new int[ dice.size () ];
+            
+            genProbProcessor ( prob, rolls, 1L, 0 );
+            
+            int maxOutcome = prob.keySet ().stream ().max ( Integer::compare ).get ();
+            
+            probabilities = new long[ maxOutcome+1 ];
+            
+            for ( int outcome : prob.keySet () )
+                probabilities[ outcome ] = prob.get ( outcome );
+        }
+        
+        return probabilities;
+	}
+	
 	public long[] probabilities()
 	{
-        return null;
+	    return probabilities ( false );
+	}
+	
+	private void genProbProcessor ( Map<Integer,Long> prob, int[] rolls, long count, int num )
+	{
+	    if ( num == dice.size () )
+	    {
+	        LuaValue l = expression.call ( ArrayConverter.objectArray ( rolls ) );
+	        int outcome = l.isboolean ()? ( l.toboolean ()? 1 : 0 ) : l.toint ();
+	        
+	        if ( !prob.containsKey ( outcome ) ) prob.put ( outcome, 0L );
+	        prob.put ( outcome, prob.get ( outcome ) + count );
+	        
+	        return;
+	    }
+	    
+	    long[] dp = dice.get ( num ).probabilities ();
+	    for ( int o = 0; o < dp.length; o++ )
+	    {
+	        if ( dp[ o ] == 0 )
+	            continue;
+	        
+	        rolls[ num ] = o;
+	        genProbProcessor ( prob, rolls, count * dp[ o ], num+1 );
+	    }
 	}
 	
 	public ReadOnlyStringProperty outcomeProperty()
@@ -99,20 +146,23 @@ public class Roller
 		}
 		
 		// Calculate Outcome
-		LuaValue rawOutcome = expression.call ( outcomeArgs.build () );
-		VarargsBuilder triggerArgs = new VarargsBuilder ();
-		triggerArgs.add ( rawOutcome ).add ( outcomeArgs.build () );
+		LuaValue luaOutcome = expression.call ( outcomeArgs.build () );
+		int rawOutcome = luaOutcome.isboolean ()? ( luaOutcome.toboolean ()? 1 : 0 ) : luaOutcome.toint ();
 		
 		// Get Outcome String
-		String outcome = rawOutcome.tojstring();
+		String outcome = String.valueOf ( rawOutcome );
 		
-		if ( booleanOutcome && labels.containsKey ( rawOutcome.toboolean() ) )
-			outcome = labels.get ( rawOutcome.toboolean() );
+		if ( labels.containsKey ( rawOutcome ) )
+			outcome = labels.get ( rawOutcome );
 		
-		else if ( !booleanOutcome && labels.containsKey ( rawOutcome.toint() ) )
-			outcome = labels.get ( rawOutcome.toint() );
+		//
+		// Process Triggers
+		//
 		
-		List<String> triggerList = new ArrayList<>();
+        VarargsBuilder triggerArgs = new VarargsBuilder ();
+        triggerArgs.add ( luaOutcome ).add ( outcomeArgs.build () );
+
+        List<String> triggerList = new ArrayList<>();
 		
 		for ( String triggerName : triggers.keySet () )
 			if ( ( Boolean ) triggers.get ( triggerName ).function.call ( triggerArgs.build() ).toboolean() == true )
