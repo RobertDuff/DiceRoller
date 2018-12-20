@@ -79,7 +79,10 @@ public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<S
 	       if ( roller.labels ().containsKey ( outcome ) )
 	           label = roller.labels ().get ( outcome );
 	       
-	       series.getData ().add ( new XYChart.Data<> ( label, prob[ outcome ] ) ); //, ( double ) prob[ outcome ] / ( double ) totalOutcomes ) );
+	       double percentage = ( ( double ) prob[ outcome ] / ( double ) totalOutcomes ) * 100.0;
+	       String toolTip = String.format ( "%d out of %d Outcomes\n%.1f%%", prob[ outcome ], totalOutcomes, percentage );
+	       
+	       series.getData ().add ( new XYChart.Data<> ( label, prob[ outcome ], toolTip ) );
 	   }
 	   
 	   data.put ( set, series );

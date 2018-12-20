@@ -19,6 +19,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.Tooltip;
 
 public class ProbabilityController implements Initializable
 {
@@ -109,6 +110,14 @@ public class ProbabilityController implements Initializable
     private void loadDataSet ( DataSet set )
     {
         probabilityChart.getData ().clear ();
-        probabilityChart.getData ().add ( data.get ( set ) );        
+        probabilityChart.getData ().add ( data.get ( set ) );   
+        
+        for ( XYChart.Series<String,Long> series : probabilityChart.getData () )
+            for ( XYChart.Data<String,Long> d : series.getData () )
+            {
+                Tooltip tip = new Tooltip();
+                tip.setText ( d.getExtraValue ().toString () );
+                Tooltip.install ( d.getNode (), tip );
+            }
     }
 }
