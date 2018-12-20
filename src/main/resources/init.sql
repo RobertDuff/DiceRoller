@@ -62,7 +62,7 @@ insert into rollerLabels values ( ( select id from rollers where groupName = 'He
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Hero System 4.0' and rollerName='Location' ),  7, 'Arms' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Hero System 4.0' and rollerName='Location' ),  8, 'Arms' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Hero System 4.0' and rollerName='Location' ),  9, 'Shoulders' );
-insert into rollerLabels values ( ( select id from rollers where groupName = 'Hero System 4.0' and rollerName='Location' ),  0, 'Chest' );
+insert into rollerLabels values ( ( select id from rollers where groupName = 'Hero System 4.0' and rollerName='Location' ), 10, 'Chest' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Hero System 4.0' and rollerName='Location' ), 11, 'Core' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Hero System 4.0' and rollerName='Location' ), 12, 'Stomach' );
 insert into rollerLabels values ( ( select id from rollers where groupName = 'Hero System 4.0' and rollerName='Location' ), 13, 'Vitals' );

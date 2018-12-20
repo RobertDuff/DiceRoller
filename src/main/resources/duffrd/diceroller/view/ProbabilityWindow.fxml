@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.chart.*?>
+<?import java.lang.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <VBox prefHeight="200.0" prefWidth="100.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <children>
+            <BarChart fx:id="probabilityChart" title="Roller Name" VBox.vgrow="ALWAYS">
+              <xAxis>
+                <CategoryAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis side="LEFT" />
+              </yAxis>
+            </BarChart>
+            <HBox alignment="TOP_CENTER" fillHeight="false" prefHeight="50.0" prefWidth="200.0" spacing="30.0" VBox.vgrow="NEVER">
+               <children>
+                  <RadioButton fx:id="eqButton" mnemonicParsing="false" selected="true" text="Equal">
+                     <toggleGroup>
+                        <ToggleGroup fx:id="set" />
+                     </toggleGroup></RadioButton>
+                  <RadioButton fx:id="ltButton" mnemonicParsing="false" text="Less Than" toggleGroup="$set" />
+                  <RadioButton fx:id="leButton" mnemonicParsing="false" text="Less Than or Equal" toggleGroup="$set" />
+                  <RadioButton fx:id="gtButton" mnemonicParsing="false" text="Greater Than" toggleGroup="$set" />
+                  <RadioButton fx:id="geButton" mnemonicParsing="false" text="Greater Than or Equal" toggleGroup="$set" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>

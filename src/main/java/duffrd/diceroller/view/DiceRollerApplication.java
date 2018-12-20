@@ -31,9 +31,11 @@ public class DiceRollerApplication extends Application
 
 	private static final String SHOW_SPLASH_SCREEN_PROPERTY_KEY = "showSplashScreen";
 
-	public static Properties applicationProperties;
-
-	public RollerModel model;
+	private static Properties applicationProperties;
+	private static DiceRollerApplication instance;
+	
+	private Stage mainStage;
+	private RollerModel model;
 	
 	public static void main ( String[] args )
 	{
@@ -42,8 +44,19 @@ public class DiceRollerApplication extends Application
 
 	public DiceRollerApplication ()
 	{
+	    instance = this;
 	}
 
+	public static DiceRollerApplication instance()
+	{
+	    return instance;
+	}
+	
+	public Stage mainStage()
+	{
+	    return mainStage;
+	}
+	
 	@Override
 	public void init () throws Exception
 	{
@@ -122,7 +135,7 @@ public class DiceRollerApplication extends Application
 	{
 		try
 		{
-			Stage mainStage = new Stage ( StageStyle.DECORATED );
+			mainStage = new Stage ( StageStyle.DECORATED );
 
 			FXMLLoader mainWindowLoader = new FXMLLoader ( getClass().getResource ( "MainWindow.fxml" ) );
 			mainWindowLoader.setController ( new MainWindowController ( model ) );
