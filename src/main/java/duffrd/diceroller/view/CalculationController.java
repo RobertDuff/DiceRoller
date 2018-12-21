@@ -72,12 +72,12 @@ public class CalculationController implements Initializable
         executor.execute ( calcTask );
     }
     
-    Map<DataSet,XYChart.Series<String,Long>> calculate() throws IOException
+    Map<DataSet,XYChart.Series<String,Double>> calculate() throws IOException
     {
         return calculate  ( false );
     }
     
-    Map<DataSet,XYChart.Series<String,Long>> calculate ( boolean recalculate ) throws IOException
+    Map<DataSet,XYChart.Series<String,Double>> calculate ( boolean recalculate ) throws IOException
     {
         this.recalculate = recalculate;
         

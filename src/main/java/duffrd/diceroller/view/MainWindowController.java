@@ -63,7 +63,10 @@ public class MainWindowController implements Initializable
 
 			rollerProperty.addListener ( ( p, o, n ) ->
 			{
-				outcomePaneController.setProperties ( n.outcomeProperty (), n.triggersProperty () );
+			    if ( n == null )
+			        outcomePaneController.setProperties ( null, null );
+			    else
+			        outcomePaneController.setProperties ( n.outcomeProperty (), n.triggersProperty () );
 			} );
 			
 			for ( String groupName : model.groupNames () )

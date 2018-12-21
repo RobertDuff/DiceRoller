@@ -2,6 +2,7 @@ package duffrd.diceroller.view;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -16,8 +17,11 @@ import javafx.scene.control.Tooltip;
 
 public class ProbabilityController implements Initializable
 {
+    private static final int NUM_TEST_ITERATIONS = 100_000;
+    private static final boolean TEST_MODE = true;
+    
     @FXML
-    public BarChart<String,Long> probabilityChart;
+    public BarChart<String,Double> probabilityChart;
     
     @FXML
     public RadioButton eqButton;
@@ -42,7 +46,7 @@ public class ProbabilityController implements Initializable
     
     private Roller roller;
     
-    Map<DataSet,XYChart.Series<String,Long>> data;
+    Map<DataSet,XYChart.Series<String,Double>> data;
     
     public ProbabilityController ( Roller roller )
     {
@@ -90,6 +94,43 @@ public class ProbabilityController implements Initializable
     
     private void rollerTest()
     {
+        if ( data == null )
+            return;
+        
+        Map<String,Long> outcomeCounts = new HashMap<>();
+        
+        for ( XYChart.Data<String,Double> e : data.get ( DataSet.EQUAL ).getData () )
+            outcomeCounts.put ( e.getXValue (), 0L );
+        
+        for ( int i = 0; i < NUM_TEST_ITERATIONS; i++ )
+        {
+            roller.roll ( TEST_MODE );
+            String name = roller.outcomeProperty ().get ();
+            
+            outcomeCounts.put ( name, outcomeCounts.get ( name ) + 1 );
+        }
+        
+        XYChart.Series<String,Double> testResults = new XYChart.Series<> ();
+        
+        for ( XYChart.Data<String,Double> e : data.get ( DataSet.EQUAL ).getData () )
+        {
+            String label = e.getXValue ();
+            long count = outcomeCounts.get ( label );
+            double percentage = ( double ) count / ( double ) NUM_TEST_ITERATIONS;
+            String tip = String.format ( "%d out of %d Outcomes\n%.1f%%", count, NUM_TEST_ITERATIONS, percentage * 100.0 );
+            
+            testResults.getData().add ( new XYChart.Data<String,Double> ( label, ( double ) count / ( double ) NUM_TEST_ITERATIONS, tip ) );
+        }
+        
+        probabilityChart.getData ().add ( testResults );
+                
+        for ( XYChart.Series<String,Double> series : probabilityChart.getData () )
+            for ( XYChart.Data<String,Double> d : series.getData () )
+            {
+                Tooltip tip = new Tooltip();
+                tip.setText ( d.getExtraValue ().toString () );
+                Tooltip.install ( d.getNode (), tip );
+            }
         
     }
     
@@ -102,8 +143,8 @@ public class ProbabilityController implements Initializable
         
         probabilityChart.getData ().add ( data.get ( set ) );   
         
-        for ( XYChart.Series<String,Long> series : probabilityChart.getData () )
-            for ( XYChart.Data<String,Long> d : series.getData () )
+        for ( XYChart.Series<String,Double> series : probabilityChart.getData () )
+            for ( XYChart.Data<String,Double> d : series.getData () )
             {
                 Tooltip tip = new Tooltip();
                 tip.setText ( d.getExtraValue ().toString () );

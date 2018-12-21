@@ -17,7 +17,7 @@ import javafx.concurrent.Worker;
 import javafx.scene.chart.XYChart;
 import utility.arrays.ArrayConverter;
 
-public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<String,Long>>>
+public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<String,Double>>>
 {
     private static final Logger logger = LogManager.getLogger ( MethodHandles.lookup().lookupClass() );
 
@@ -38,7 +38,7 @@ public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<S
 	}
 	
 	@Override
-	protected Map<DataSet,XYChart.Series<String,Long>> call () throws Exception
+	protected Map<DataSet,XYChart.Series<String,Double>> call () throws Exception
 	{
 	    logger.debug ( "Called..." );
         ChangeListener<Number> p = ( i, o, n ) -> updateProgress ( n.doubleValue (), 1.0 );
@@ -92,7 +92,7 @@ public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<S
             gt[ i ] = remaining;
         }
         
-        Map<DataSet,XYChart.Series<String,Long>> data = new HashMap<>();
+        Map<DataSet,XYChart.Series<String,Double>> data = new HashMap<>();
         
         addSeries ( data, totalOutcomes,                 DataSet.EQUAL, eq );
         addSeries ( data, totalOutcomes,             DataSet.LESS_THAN, lt );
@@ -103,9 +103,9 @@ public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<S
         return data;
 	}	
 	
-	private void addSeries ( Map<DataSet,XYChart.Series<String,Long>> data, long totalOutcomes, DataSet set, long[] prob )
+	private void addSeries ( Map<DataSet,XYChart.Series<String,Double>> data, long totalOutcomes, DataSet set, long[] prob )
 	{
-	   XYChart.Series<String,Long> series = new XYChart.Series<> ();
+	   XYChart.Series<String,Double> series = new XYChart.Series<> ();
 	   series.setName ( set.label () );
 	   
 	   for ( int outcome = 0; outcome < prob.length; outcome++ )
@@ -118,10 +118,10 @@ public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<S
 	       if ( roller.labels ().containsKey ( outcome ) )
 	           label = roller.labels ().get ( outcome );
 	       
-	       double percentage = ( ( double ) prob[ outcome ] / ( double ) totalOutcomes ) * 100.0;
-	       String toolTip = String.format ( "%d out of %d Outcomes\n%.1f%%", prob[ outcome ], totalOutcomes, percentage );
+	       double percentage = ( double ) prob[ outcome ] / ( double ) totalOutcomes;
+	       String toolTip = String.format ( "%d out of %d Outcomes\n%.1f%%", prob[ outcome ], totalOutcomes, percentage * 100.0 );
 	       
-	       series.getData ().add ( new XYChart.Data<> ( label, prob[ outcome ], toolTip ) );
+	       series.getData ().add ( new XYChart.Data<> ( label, percentage, toolTip ) );
 	   }
 	   
 	   data.put ( set, series );

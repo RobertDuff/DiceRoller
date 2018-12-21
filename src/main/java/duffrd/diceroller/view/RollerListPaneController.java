@@ -93,6 +93,8 @@ public class RollerListPaneController implements Initializable
                             @Override
                             public void handle ( ContextMenuEvent event )
                             {
+                                rollerProperty.set ( null );
+                                
                                 ContextMenu menu = new ContextMenu ();
 
                                 MenuItem prob = new MenuItem ( "Probability Chart" );

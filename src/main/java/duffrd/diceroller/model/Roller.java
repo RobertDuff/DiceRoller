@@ -185,6 +185,11 @@ public class Roller
 	
 	public void roll()
 	{
+	    roll ( false );
+	}
+	
+	public void roll ( boolean testMode )
+	{
 		StringBuilder historyFacesBuilder = new StringBuilder();
 		// Roll Each Dice
 						
@@ -223,7 +228,8 @@ public class Roller
 		
 		String triggerString = Join.join ( ", ", triggerList );
 		
-		History.history ().record ( rollerName, outcome, triggerString, historyFacesBuilder.toString () );
+		if ( !testMode )
+		    History.history ().record ( rollerName, outcome, triggerString, historyFacesBuilder.toString () );
 		
 		outcomeProperty.set ( outcome );
 		triggersProperty.set ( triggerString );
