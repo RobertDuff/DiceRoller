@@ -1,39 +1,21 @@
 package duffrd.diceroller.view;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 import duffrd.diceroller.model.Roller;
-import javafx.concurrent.Task;
-import javafx.concurrent.WorkerStateEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Tooltip;
 
 public class ProbabilityController implements Initializable
 {
-    private static Executor executor = Executors.newFixedThreadPool ( 1, new ThreadFactory()
-    {   
-        @Override
-        public Thread newThread ( Runnable r )
-        {
-            Thread thread = new Thread ( r );
-            thread.setDaemon ( true );
-            return thread;
-        }
-    } );
-
     @FXML
     public BarChart<String,Long> probabilityChart;
     
@@ -52,6 +34,12 @@ public class ProbabilityController implements Initializable
     @FXML
     public RadioButton geButton;
     
+    @FXML
+    public Button recalculateButton;
+    
+    @FXML
+    public Button rollerTestButton;
+    
     private Roller roller;
     
     Map<DataSet,XYChart.Series<String,Long>> data;
@@ -64,34 +52,7 @@ public class ProbabilityController implements Initializable
     @Override
     public void initialize ( URL location, ResourceBundle resources )
     {
-        final Alert alert = new Alert ( AlertType.INFORMATION );
-        alert.setTitle ( "Probability Distribution" );
-        alert.setHeaderText ( "Calculation in Progress.  Please Wait..." );
-        
-        Task<Map<DataSet,XYChart.Series<String,Long>>> probabilityCalculationTask = new ProbabilityCalculatorTask ( roller );
-        
-        probabilityCalculationTask.setOnSucceeded ( new EventHandler<WorkerStateEvent>() 
-        {
-            @Override
-            public void handle ( WorkerStateEvent event )
-            {
-              alert.close ();  
-            }
-        } );
-
-        executor.execute ( probabilityCalculationTask );
-        
-        alert.showAndWait ();
-                
-        try
-        {
-            data = probabilityCalculationTask.get ();
-        }
-        catch ( InterruptedException | ExecutionException e )
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        calculate ( false );
         
         eqButton.setOnAction ( event -> loadDataSet ( DataSet.EQUAL ) );
         ltButton.setOnAction ( event -> loadDataSet ( DataSet.LESS_THAN ) );
@@ -99,17 +60,46 @@ public class ProbabilityController implements Initializable
         gtButton.setOnAction ( event -> loadDataSet ( DataSet.GREATER_THAN ) );
         geButton.setOnAction ( event -> loadDataSet ( DataSet.GREATER_THAN_OR_EQUAL ) );
         
+        recalculateButton.setOnAction ( event -> calculate ( true ) );
+        rollerTestButton.setOnAction ( event -> rollerTest() );
+        
         probabilityChart.setTitle ( roller.name () );
         
         probabilityChart.getXAxis ().setLabel ( "Outcomes" );
         probabilityChart.getYAxis ().setLabel ( "Probability" );
+        probabilityChart.setLegendVisible ( false );
         
         loadDataSet ( DataSet.EQUAL );
+    }
+    
+    private void calculate ( boolean recalculate )
+    {
+        CalculationController calc = new CalculationController ( roller );
+        try
+        {
+            data = calc.calculate ( recalculate );
+            loadDataSet ( DataSet.EQUAL );
+            eqButton.setSelected ( true );
+        }
+        catch ( IOException e1 )
+        {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }        
+    }
+    
+    private void rollerTest()
+    {
+        
     }
     
     private void loadDataSet ( DataSet set )
     {
         probabilityChart.getData ().clear ();
+
+        if ( data == null )
+            return;
+        
         probabilityChart.getData ().add ( data.get ( set ) );   
         
         for ( XYChart.Series<String,Long> series : probabilityChart.getData () )
@@ -118,6 +108,8 @@ public class ProbabilityController implements Initializable
                 Tooltip tip = new Tooltip();
                 tip.setText ( d.getExtraValue ().toString () );
                 Tooltip.install ( d.getNode (), tip );
+                
+                d.getNode ().setStyle ( set.style () );
             }
     }
 }

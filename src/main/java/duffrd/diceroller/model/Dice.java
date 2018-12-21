@@ -2,18 +2,27 @@ package duffrd.diceroller.model;
 
 import static utility.arrays.ArrayConverter.intArray;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import utility.math.Polynomial;
 
 public class Dice
 {
+    private static final Logger logger = LogManager.getLogger ( MethodHandles.lookup().lookupClass() );
+    
     Die die;
     int count;
     int start;
     int end;
 
     long[] probabilities;
+    
+    private BooleanProperty canceledProperty = new SimpleBooleanProperty ();
 
     public Dice ( Die die, int count )
     {
@@ -29,12 +38,17 @@ public class Dice
         this.end   = end;
     }
 
+    public BooleanProperty canceledProperty()
+    {
+        return canceledProperty;
+    }
+    
     public DiceOutcome roll()
     {
         return new DiceOutcome ( this );
     }
     
-    public long[] probabilities()
+    public long[] probabilities() throws ProbablityCalculationCancelledException
     { 
         if ( probabilities == null )
         {
@@ -53,22 +67,40 @@ public class Dice
             }
             else
             {
+                logger.debug ( "Starting Probability Calculation" );
                 int maxOutcome = die.range.get ( die.range.size ()-1 ) * ( end - start );
                 probabilities = new long[ maxOutcome+1 ];
                 
                 int[] rolls = new int[ count ];
                 
-                genProbProcessor ( rolls, count );                
+                try
+                {
+                    genProbProcessor ( rolls, count );
+                }
+                catch ( ProbablityCalculationCancelledException e )
+                {
+                    probabilities = null;
+                    throw e;
+                }                
+
+                logger.debug ( "Probability Calculation Complete" );
             }
         }
 
         return probabilities;
     }
 
-    private void genProbProcessor ( int[] rolls, int num )
+    private void genProbProcessor ( int[] rolls, int num ) throws ProbablityCalculationCancelledException
     {
+        logger.debug ( "Enter Level " + num );
+        
+        if ( canceledProperty.getValue () )
+            throw new ProbablityCalculationCancelledException ();
+        
         if ( num == 0 )
         {
+            logger.debug ( "Adding Counts" );
+            
             long count = 1;
             
             for ( int roll : rolls )
@@ -84,10 +116,17 @@ public class Dice
         }
         
         for ( int face : die.range )
-        {
+        {            
+            if ( canceledProperty.getValue () )
+                throw new ProbablityCalculationCancelledException ();
+         
+            logger.debug ( "Loop: " + num + "." + face );
+                
             rolls[ num-1 ] = face;
             genProbProcessor ( rolls, num-1 );
         }
+        
+        logger.debug ( "Exit Level " + num );
     }
     
     @Override

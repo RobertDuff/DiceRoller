@@ -29,6 +29,12 @@
                   <RadioButton fx:id="geButton" mnemonicParsing="false" text="Greater Than or Equal" toggleGroup="$set" />
                </children>
             </HBox>
+            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="40.0">
+               <children>
+                  <Button fx:id="recalculateButton" mnemonicParsing="false" text="Recaclulate" />
+                  <Button fx:id="rollerTestButton" mnemonicParsing="false" text="Test" />
+               </children>
+            </HBox>
          </children>
       </VBox>
    </children>

@@ -1,6 +1,65 @@
--- General Rollers
+-- Basic Rollers
 
-insert into rollers ( groupName, rollerName, definition ) values ( 'General', 'Coin Flip', 'd2' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '1 D4', '1D4' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '2 D4s', '2D4' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '3 D4s', '3D4' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '4 D4s', '4D4' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '5 D4s', '5D4' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '6 D4s', '6D4' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '7 D4s', '7D4' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '8 D4s', '8D4' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '9 D4s', '9D4' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D4s', '10 D4s', '10D4' );
+
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '1 D6', '1D6' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '2 D6s', '2D6' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '3 D6s', '3D6' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '4 D6s', '4D6' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '5 D6s', '5D6' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '6 D6s', '6D6' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '7 D6s', '7D6' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '8 D6s', '8D6' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '9 D6s', '9D6' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D6s', '10 D6s', '10D6' );
+
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '1 D8', '1D8' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '2 D8s', '2D8' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '3 D8s', '3D8' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '4 D8s', '4D8' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '5 D8s', '5D8' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '6 D8s', '6D8' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '7 D8s', '7D8' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '8 D8s', '8D8' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '9 D8s', '9D8' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D8s', '10 D8s', '10D8' );
+
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '1 D10', '1D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '2 D10s', '2D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '3 D10s', '3D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '4 D10s', '4D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '5 D10s', '5D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '6 D10s', '6D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '7 D10s', '7D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '8 D10s', '8D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '9 D10s', '9D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', '10 D10s', '10D10' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', 'Percentiles (0..99)', 'd100 - 1' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D10s', 'Percentiles (1..100)', 'd100' );
+
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '1 D12', '1D12' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '2 D12s', '2D12' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '3 D12s', '3D12' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '4 D12s', '4D12' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '5 D12s', '5D12' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '6 D12s', '6D12' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '7 D12s', '7D12' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '8 D12s', '8D12' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '9 D12s', '9D12' );
+insert into rollers ( groupName, rollerName, definition ) values ( 'D12s', '10 D12s', '10D12' );
+
+-- Miscellaneous Rollers
+
+insert into rollers ( groupName, rollerName, definition ) values ( 'Miscellaneous', 'Coin Flip', 'd2' );
 insert into rollerLabels values ( ( select id from rollers where rollerName='Coin Flip' ), 1, 'Heads' );
 insert into rollerLabels values ( ( select id from rollers where rollerName='Coin Flip' ), 2, 'Tails' );
 

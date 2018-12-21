@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.internal.ArrayComparisonFailure;
 
 public class DiceTest
 {
@@ -30,7 +31,7 @@ public class DiceTest
 	}
 	
 	@Test
-	public void test1d6 ()
+	public void test1d6 () throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( D6, 1 );
 		
@@ -38,7 +39,7 @@ public class DiceTest
 	}
 	
 	@Test
-	public void test2d6 ()
+	public void test2d6 () throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( D6, 2 );
 		
@@ -46,7 +47,7 @@ public class DiceTest
 	}
 	
 	@Test
-	public void test3d6 ()
+	public void test3d6 () throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( D6, 3 );
 		
@@ -54,7 +55,7 @@ public class DiceTest
 	}
 	
 	@Test
-	public void test1d4 ()
+	public void test1d4 () throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( D4, 1 );
 		
@@ -62,7 +63,7 @@ public class DiceTest
 	}	
 	
 	@Test
-	public void test2d4 ()
+	public void test2d4 () throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( D4, 2 );
 		
@@ -70,7 +71,7 @@ public class DiceTest
 	}	
 	
 	@Test
-	public void test3d4 ()
+	public void test3d4 () throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( D4, 3 );
 		
@@ -78,7 +79,7 @@ public class DiceTest
 	}	
 	
 	@Test
-	public void test2of3d6()
+	public void test2of3d6() throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( D6, 3, 1, 3 );
 		
@@ -86,7 +87,7 @@ public class DiceTest
 	}
 	
 	@Test
-	public void test2of4d6()
+	public void test2of4d6() throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( D6, 4, 2, 4 );
 		
@@ -94,7 +95,7 @@ public class DiceTest
 	}
 	
 	@Test
-	public void testLow3of4d6()
+	public void testLow3of4d6() throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( D6, 4, 0, 3 );
 		
@@ -102,7 +103,7 @@ public class DiceTest
 	}
 	
 	@Test
-	public void test1DW()
+	public void test1DW() throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( WEIGHTED, 1 );
 		
@@ -110,7 +111,7 @@ public class DiceTest
 	}
 	
 	@Test
-	public void test2DW()
+	public void test2DW() throws ArrayComparisonFailure, ProbablityCalculationCancelledException
 	{
 		Dice dice = new Dice ( WEIGHTED, 2 );
 		
@@ -118,7 +119,7 @@ public class DiceTest
 	}
     
     @Test
-    public void test3DW()
+    public void test3DW() throws ArrayComparisonFailure, ProbablityCalculationCancelledException
     {
         Dice dice = new Dice ( WEIGHTED, 3 );
         
@@ -133,7 +134,7 @@ public class DiceTest
     }
     
     @Test
-    public void test2of3DW()
+    public void test2of3DW() throws ArrayComparisonFailure, ProbablityCalculationCancelledException
     {
         Dice dice = new Dice ( WEIGHTED, 3, 1, 3 );
         

@@ -1,28 +1,66 @@
 package duffrd.diceroller.view;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import duffrd.diceroller.model.ProbablityCalculationCancelledException;
 import duffrd.diceroller.model.Roller;
+import javafx.beans.binding.Bindings;
+import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Task;
+import javafx.concurrent.Worker;
 import javafx.scene.chart.XYChart;
 import utility.arrays.ArrayConverter;
 
 public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<String,Long>>>
 {
+    private static final Logger logger = LogManager.getLogger ( MethodHandles.lookup().lookupClass() );
+
     private Roller roller;
+    private boolean recalculate;
     
-	public ProbabilityCalculatorTask ( Roller roller )
+	public ProbabilityCalculatorTask ( Roller roller, boolean recalculate )
 	{
 		this.roller = roller;
+		this.recalculate = recalculate;
+		roller.canceledProperty ().bind ( Bindings.equal ( stateProperty (), Worker.State.CANCELLED ) );
 	}
 
 	@Override
+	protected void cancelled()
+	{
+	    //roller.canceledProperty ().set ( true );
+	}
+	
+	@Override
 	protected Map<DataSet,XYChart.Series<String,Long>> call () throws Exception
 	{
-	    long[] eq = roller.probabilities ();
-	            
+	    logger.debug ( "Called..." );
+        ChangeListener<Number> p = ( i, o, n ) -> updateProgress ( n.doubleValue (), 1.0 );
+	    
+        roller.progressProperty ().addListener ( p );
+                
+        logger.debug ( "Getting Probs..." );
+        long[] eq = null;
+        
+        try
+        {
+            eq = roller.probabilities ( recalculate );
+        }
+        catch ( ProbablityCalculationCancelledException e )
+        {
+            return null;
+        }
+	                    
+        roller.progressProperty ().removeListener ( p );
+        
+        updateProgress ( 1,  1 );
+        
         long totalOutcomes = Arrays.asList ( ArrayConverter.longArray ( eq ) ).stream ().mapToLong ( l -> l ).sum ();
         
         long[] lt = new long[ eq.length ];
@@ -30,17 +68,18 @@ public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<S
         long[] gt = new long[ eq.length ];
         long[] ge = new long[ eq.length ];
         
-        Arrays.fill ( lt, 0L );
-        Arrays.fill ( le, 0L );
-        Arrays.fill ( gt, 0L );
-        Arrays.fill ( ge, 0L );
+        for ( int i=0; i<eq.length; i++ ) if ( eq[ i ] == 0 ) eq[ i ] = Long.MIN_VALUE;
+        Arrays.fill ( lt, Long.MIN_VALUE );
+        Arrays.fill ( le, Long.MIN_VALUE );
+        Arrays.fill ( gt, Long.MIN_VALUE );
+        Arrays.fill ( ge, Long.MIN_VALUE );
         
         long soFar = 0;
         long remaining = totalOutcomes;
         
         for ( int i=0; i<eq.length; i++ )
         {
-            if ( eq[ i ] == 0 )
+            if ( eq[ i ] == Long.MIN_VALUE )
                 continue;
             
             lt[ i ] = soFar;
@@ -71,7 +110,7 @@ public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<S
 	   
 	   for ( int outcome = 0; outcome < prob.length; outcome++ )
 	   {
-	       if ( prob[ outcome ] == 0 )
+	       if ( prob[ outcome ] == Long.MIN_VALUE )
 	           continue;
 	       
 	       String label = String.valueOf ( outcome );

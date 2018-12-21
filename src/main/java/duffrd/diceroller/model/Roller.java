@@ -1,15 +1,22 @@
 package duffrd.diceroller.model;
 
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaValue;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import utility.arrays.ArrayConverter;
@@ -19,6 +26,8 @@ import utility.lua.VarargsBuilder;
 
 public class Roller
 {
+    private static final Logger logger = LogManager.getLogger ( MethodHandles.lookup().lookupClass() );
+
     public static class Expression
     {
         public String definition;
@@ -47,6 +56,8 @@ public class Roller
 	
 	private StringProperty outcomeProperty = new SimpleStringProperty ();
 	private StringProperty triggersProperty = new SimpleStringProperty ();
+    private DoubleProperty progressProperty = new SimpleDoubleProperty();
+    private BooleanProperty canceledProperty = new SimpleBooleanProperty ();
     
 	private long[] probabilities;
 	
@@ -70,36 +81,58 @@ public class Roller
 	    return labels;
 	}
 	
-	public long[] probabilities ( boolean recalculate )
+	public long[] probabilities ( boolean recalculate ) throws ProbablityCalculationCancelledException
 	{
-        if ( probabilities == null || recalculate )
+	    if ( recalculate )
+	    {
+	        logger.info ( "Recalculating Probabilities" );
+	        probabilities = null;
+	        for ( Dice d : dice ) d.probabilities = null;
+	    }
+	    
+        if ( probabilities == null )
         {
+            logger.debug ( "Starting Probability Calculation" );
+            
+            progressProperty.setValue ( 0.3 );
+                        
             Map<Integer,Long> prob = new HashMap<>();
             
             int rolls[] = new int[ dice.size () ];
             
             genProbProcessor ( prob, rolls, 1L, 0 );
-            
+                        
             int maxOutcome = prob.keySet ().stream ().max ( Integer::compare ).get ();
             
             probabilities = new long[ maxOutcome+1 ];
             
             for ( int outcome : prob.keySet () )
                 probabilities[ outcome ] = prob.get ( outcome );
+            
+            progressProperty.set ( 1.0 );
+            
+            logger.debug ( "Probablity Calculation Complete" );
         }
         
         return probabilities;
 	}
 	
-	public long[] probabilities()
+	public long[] probabilities() throws ProbablityCalculationCancelledException
 	{
 	    return probabilities ( false );
 	}
 	
-	private void genProbProcessor ( Map<Integer,Long> prob, int[] rolls, long count, int num )
+	private void genProbProcessor ( Map<Integer,Long> prob, int[] rolls, long count, int num ) throws ProbablityCalculationCancelledException
 	{
+	    logger.debug ( "Entered Level " + num );
+
+	    if ( canceledProperty.getValue () )
+	        throw new ProbablityCalculationCancelledException ();
+	        
 	    if ( num == dice.size () )
 	    {
+	        logger.debug ( "Adding Counts" );
+	        
 	        LuaValue l = expression.call ( ArrayConverter.objectArray ( rolls ) );
 	        int outcome = l.isboolean ()? ( l.toboolean ()? 1 : 0 ) : l.toint ();
 	        
@@ -109,15 +142,25 @@ public class Roller
 	        return;
 	    }
 	    
+	    logger.debug ( "Get DICE Probs Level " + num );
+	    
 	    long[] dp = dice.get ( num ).probabilities ();
+	    
 	    for ( int o = 0; o < dp.length; o++ )
-	    {
+	    {            
+            if ( canceledProperty.getValue () )
+                throw new ProbablityCalculationCancelledException ();
+	        	            
 	        if ( dp[ o ] == 0 )
 	            continue;
-	        
+
+	        logger.debug ( "Loop: " + num + "." + o );
+
 	        rolls[ num ] = o;
 	        genProbProcessor ( prob, rolls, count * dp[ o ], num+1 );
 	    }
+	    
+	    logger.debug ( "Exit Level " + num );
 	}
 	
 	public ReadOnlyStringProperty outcomeProperty()
@@ -130,6 +173,16 @@ public class Roller
 		return triggersProperty;
 	}
 		
+    public DoubleProperty progressProperty()
+    {
+        return progressProperty;
+    }
+    
+	public BooleanProperty canceledProperty()
+	{
+	    return canceledProperty;
+	}
+	
 	public void roll()
 	{
 		StringBuilder historyFacesBuilder = new StringBuilder();

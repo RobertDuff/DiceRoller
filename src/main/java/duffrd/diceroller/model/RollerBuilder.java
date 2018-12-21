@@ -101,8 +101,10 @@ public class RollerBuilder
             
             Dice dice = new Dice ( die, num, start, end );
                         
-            luaCode = luaCode.replace ( matcher.group (), "dice[" + argIndex++ + "]" );
+            luaCode = luaCode.replaceFirst ( Pattern.quote ( matcher.group () ), "dice[" + argIndex++ + "]" );
             roller.dice.add ( dice );
+            
+            dice.canceledProperty ().bind ( roller.canceledProperty () );
         }
         
         roller.expression = new Function ( roller.lua, "local dice = {...}", "return ", luaCode );
