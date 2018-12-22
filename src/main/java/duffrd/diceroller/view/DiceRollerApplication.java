@@ -57,6 +57,11 @@ public class DiceRollerApplication extends Application
 	    return mainStage;
 	}
 	
+	public RollerModel model()
+	{
+	    return model;
+	}
+	
 	@Override
 	public void init () throws Exception
 	{

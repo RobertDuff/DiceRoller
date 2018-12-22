@@ -18,13 +18,12 @@
                 </Menu>
                 <Menu mnemonicParsing="false" text="Edit">
                   <items>
-                        <MenuItem mnemonicParsing="false" text="New Roller" />
-                        <MenuItem mnemonicParsing="false" text="Edit Roller" />
-                    <MenuItem mnemonicParsing="false" text="Delete Roller" />
+                        <MenuItem fx:id="newRollerItem" mnemonicParsing="false" text="New Roller" />
+                        <MenuItem fx:id="editRollerItem" mnemonicParsing="false" text="Edit Roller" />
+                    <MenuItem fx:id="deleteRollerItem" mnemonicParsing="false" text="Delete Roller" />
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem mnemonicParsing="false" text="New Group" />
-                        <MenuItem mnemonicParsing="false" text="Rename Group" />
-                        <MenuItem mnemonicParsing="false" text="Delete Group" />
+                        <MenuItem fx:id="renameGroupItem" mnemonicParsing="false" text="Rename Group" />
+                        <MenuItem fx:id="deleteGroupItem" mnemonicParsing="false" text="Delete Group" />
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

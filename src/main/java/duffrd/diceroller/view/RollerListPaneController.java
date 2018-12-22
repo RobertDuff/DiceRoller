@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import duffrd.diceroller.model.DiceRollerException;
 import duffrd.diceroller.model.Roller;
 import javafx.beans.property.ObjectProperty;
-import javafx.event.ActionEvent;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -98,35 +99,47 @@ public class RollerListPaneController implements Initializable
                                 ContextMenu menu = new ContextMenu ();
 
                                 MenuItem prob = new MenuItem ( "Probability Chart" );
-                                prob.setOnAction ( new EventHandler<ActionEvent>()
+                                prob.setOnAction ( e -> 
                                 {
-                                    @Override
-                                    public void handle ( ActionEvent event )
+                                    try
                                     {
-                                        try
-                                        {
-                                            FXMLLoader probabilityLoader = new FXMLLoader ( getClass().getResource ( "ProbabilityWindow.fxml" ) );
-                                            probabilityLoader.setController ( new ProbabilityController ( getItem() ) );
-                                            Pane probabilityPane = probabilityLoader.load();
+                                        FXMLLoader probabilityLoader = new FXMLLoader ( getClass().getResource ( "ProbabilityWindow.fxml" ) );
+                                        probabilityLoader.setController ( new ProbabilityController ( getItem() ) );
+                                        Pane probabilityPane = probabilityLoader.load();
 
-                                            final Stage probabilityStage = new Stage();
-                                            probabilityStage.initModality ( Modality.APPLICATION_MODAL );
-                                            probabilityStage.initOwner ( DiceRollerApplication.instance ().mainStage () );
-                                            Scene probabilityScene = new Scene ( probabilityPane, 1000, 500 );
-                                            probabilityStage.setScene ( probabilityScene );
-                                            probabilityStage.show ();
-                                        }
-                                        catch ( IOException e )
-                                        {
-                                            // TODO Auto-generated catch block
-                                            e.printStackTrace();
-                                        }
+                                        final Stage probabilityStage = new Stage();
+                                        probabilityStage.initModality ( Modality.APPLICATION_MODAL );
+                                        probabilityStage.initOwner ( DiceRollerApplication.instance ().mainStage () );
+                                        Scene probabilityScene = new Scene ( probabilityPane, 1000, 500 );
+                                        probabilityStage.setScene ( probabilityScene );
+                                        probabilityStage.show ();
                                     }
-                                });
-
+                                    catch ( IOException x )
+                                    {
+                                        // TODO Auto-generated catch block
+                                        x.printStackTrace();
+                                    }
+                                } );
+                                
                                 MenuItem edit = new MenuItem ( "Edit" );
 
                                 MenuItem delete = new MenuItem ( "Delete" );
+                                delete.setOnAction ( e ->
+                                {
+                                    Roller roller = getItem ();
+                                    
+                                    try
+                                    {
+                                        DiceRollerApplication.instance ().model ().deleteRoller ( roller );
+                                    }
+                                    catch ( DiceRollerException e1 )
+                                    {
+                                        e1.printStackTrace();
+                                        return;
+                                    }
+                                    
+                                    rollerList.getItems ().remove ( roller );
+                                } );
 
                                 menu.getItems ().addAll ( prob, new SeparatorMenuItem (), edit, delete );
 
@@ -143,8 +156,8 @@ public class RollerListPaneController implements Initializable
         rollerList.setCellFactory ( cellFactory );
     }
 
-    public void addRollers ( Roller... rollers )
+    public ObservableList<Roller> rollerListProperty()
     {
-        rollerList.getItems ().addAll ( rollers );
+        return rollerList.getItems ();
     }
 }

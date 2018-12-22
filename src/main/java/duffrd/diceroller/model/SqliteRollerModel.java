@@ -82,7 +82,7 @@ public class SqliteRollerModel implements RollerModel
     }
     
     @Override
-    public List<String> groupNames () throws RuntimeException
+    public List<String> groupNames () throws DiceRollerException
     {
         try
         {
@@ -97,12 +97,12 @@ public class SqliteRollerModel implements RollerModel
         }
         catch ( Exception e )
         {
-            throw new RuntimeException ( e );
+            throw new DiceRollerException ( e );
         }
     }
 
     @Override
-    public List<Roller> rollers ( String group ) throws RuntimeException
+    public List<Roller> rollers ( String group ) throws DiceRollerException
     {
         try
         {
@@ -149,22 +149,43 @@ public class SqliteRollerModel implements RollerModel
         }
         catch ( Exception e )
         {
-            throw new RuntimeException ( e );
+            throw new DiceRollerException ( e );
         }
     }
 
     @Override
-    public void renameGroup ( String origName, String newName )
+    public void renameGroup ( String origName, String newName ) throws DiceRollerException
     {
-        // TODO Auto-generated method stub
-
+        try
+        {
+            PreparedStatement deleteRoller = sql.prepareStatement ( "update rollers set groupName=? where groupName=?" );
+            
+            deleteRoller.setString ( 1, newName );
+            deleteRoller.setString ( 2, origName );
+            
+            deleteRoller.executeUpdate ();
+        }
+        catch ( SQLException e )
+        {
+            throw new DiceRollerException ( e );
+        }
     }
 
     @Override
-    public void deleteGroup ( String group )
+    public void deleteGroup ( String group ) throws DiceRollerException
     {
-        // TODO Auto-generated method stub
-
+        try
+        {
+            PreparedStatement deleteRoller = sql.prepareStatement ( "delete from rollers where groupName=?" );
+            
+            deleteRoller.setString ( 1, group );
+            
+            deleteRoller.executeUpdate ();
+        }
+        catch ( SQLException e )
+        {
+            throw new DiceRollerException ( e );
+        }
     }
 
     @Override
@@ -174,9 +195,20 @@ public class SqliteRollerModel implements RollerModel
     }
 
     @Override
-    public void deleteRoller ( Roller roller )
+    public void deleteRoller ( Roller roller ) throws DiceRollerException
     {
-        // TODO Auto-generated method stub
-
+        try
+        {
+            PreparedStatement deleteRoller = sql.prepareStatement ( "delete from rollers where groupName=? and rollerName=?" );
+            
+            deleteRoller.setString ( 1, roller.groupName );
+            deleteRoller.setString ( 2, roller.rollerName );
+            
+            deleteRoller.executeUpdate ();
+        }
+        catch ( SQLException e )
+        {
+            throw new DiceRollerException ( e );
+        }
     }
 }
