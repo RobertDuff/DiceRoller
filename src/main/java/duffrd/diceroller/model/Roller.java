@@ -71,7 +71,12 @@ public class Roller
         return rollerName;
     }
 	
-	public String definition()
+	public void name ( String name )
+    {
+        rollerName = name; 
+    }
+
+    public String definition()
 	{
 		return definition;
 	}

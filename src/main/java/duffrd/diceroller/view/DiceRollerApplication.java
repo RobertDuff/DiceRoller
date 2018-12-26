@@ -131,7 +131,7 @@ public class DiceRollerApplication extends Application
 		}
 		else
 		{
-		    model = new SqliteRollerModel ();
+		    model = new SqliteRollerModel();
 		    openMainStage ();
 		}
 	}

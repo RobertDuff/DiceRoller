@@ -22,6 +22,7 @@
                         <MenuItem fx:id="editRollerItem" mnemonicParsing="false" text="Edit Roller" />
                     <MenuItem fx:id="deleteRollerItem" mnemonicParsing="false" text="Delete Roller" />
                         <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="newGroupItem" mnemonicParsing="false" text="New Group" />
                         <MenuItem fx:id="renameGroupItem" mnemonicParsing="false" text="Rename Group" />
                         <MenuItem fx:id="deleteGroupItem" mnemonicParsing="false" text="Delete Group" />
                   </items>

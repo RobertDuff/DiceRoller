@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import com.sun.javafx.scene.control.skin.ListViewSkin;
+
 import duffrd.diceroller.model.DiceRollerException;
 import duffrd.diceroller.model.Roller;
 import javafx.beans.property.ObjectProperty;
@@ -29,6 +31,20 @@ import javafx.util.Callback;
 
 public class RollerListPaneController implements Initializable
 {
+    public class RefresherSkin extends ListViewSkin<Roller>
+    {
+        public RefresherSkin ( ListView<Roller> listView )
+        {
+            super ( listView );
+            // TODO Auto-generated constructor stub
+        }
+        
+        public void refresh()
+        {
+            super.flow.recreateCells ();
+        }
+    }
+    
     @FXML
     public ListView<Roller> rollerList;
 
@@ -42,6 +58,9 @@ public class RollerListPaneController implements Initializable
     @Override
     public void initialize ( URL location, ResourceBundle resources )
     {
+        RefresherSkin skin = new RefresherSkin ( rollerList );
+        rollerList.setSkin ( skin );
+        
         Callback<ListView<Roller>,ListCell<Roller>> cellFactory = new Callback<ListView<Roller>,ListCell<Roller>>()
         {
             @Override
@@ -93,7 +112,9 @@ public class RollerListPaneController implements Initializable
                         {
                             @Override
                             public void handle ( ContextMenuEvent event )
-                            {
+                            {                                
+                                event.consume ();
+                                
                                 rollerProperty.set ( null );
                                 
                                 ContextMenu menu = new ContextMenu ();

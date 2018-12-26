@@ -63,3 +63,10 @@ create table variables
 	sequence integer,
 	unique ( groupId, name )
 );
+
+create trigger applySquenceToNewVariable after insert on variables
+when new.sequence is null
+begin
+	update variables set sequence = ( select ifnull ( max ( sequence ), 0 ) + 1 from variables where groupId=new.groupId ) where groupId=new.groupId and name=new.name;
+end;
+

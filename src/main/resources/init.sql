@@ -71,6 +71,9 @@ insert into groups ( id, name ) values ( 6, 'D20s' );
 
 insert into rollers ( groupId, id, name, definition ) values ( 6, 53, '1 D20', '1D20' );
 
+insert into triggers values ( 53, 'Critical Fail', 'A==1' );
+insert into triggers values ( 53, 'Nat'' Twenty', 'A==20' );
+
 -- Miscellaneous Rollers
 
 insert into groups ( id, name ) values ( 7, 'Miscellaneous' );

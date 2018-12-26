@@ -22,5 +22,5 @@ insert into triggers values ( 1, 'T2', 'A == 1' );
 insert into labels values ( 1, 1, "One" );
 insert into labels values ( 1, 2, "Two" );
 
-insert into variables values ( 1, "V1", 3, 1 );
-insert into variables values ( 1, "V2", 6, 2 );
+insert into variables ( groupId, name, value ) values ( 1, "V1", 3 );
+insert into variables ( groupId, name, value ) values ( 1, "V2", 6 );
