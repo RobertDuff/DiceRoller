@@ -509,9 +509,9 @@ public class SqliteRollerModelTest
     @Test
     public void testCreateRoller() throws DiceRollerException, SQLException
     {
-        Roller roller = new RollerBuilder ().group ( "G1" ).name ( "Test" ).definition ( "1d4" ).build ();
+        Roller roller = new RollerBuilder ( "G1" ).name ( "Test" ).definition ( "1d4" ).build ();
         
-        model.createRoller ( roller );
+        model.createRoller ( "G1", roller );
                 
         assertEquals ( "Test", model.rollers ( "G1" ).get ( 7 ).name () );
         
@@ -524,10 +524,10 @@ public class SqliteRollerModelTest
     @Test
     public void testCreateDuplicateRoller() throws DiceRollerException, SQLException
     {
-        Roller roller = new RollerBuilder ().group ( "G1" ).name ( "R1" ).definition ( "1d4" ).build ();
+        Roller roller = new RollerBuilder ( "G1" ).name ( "R1" ).definition ( "1d4" ).build ();
         
         thrown.expect ( DiceRollerException.class );
-        model.createRoller ( roller );
+        model.createRoller ( "G1", roller );
     }
     
     @Test
@@ -550,18 +550,16 @@ public class SqliteRollerModelTest
     @Test
     public void testUpdateRoller() throws DiceRollerException, SQLException
     {
-        assertEquals ( "G1", rollers.get ( 0 ).groupName );
         assertEquals ( "R1", rollers.get ( 0 ).rollerName );
         assertEquals ( "1D4", rollers.get ( 0 ).definition );
         
         assertEquals ( 2, new Sql ( sql, "select count(*) from labels where rollerId=1" ).go ().single ().getInt ( 1 ) );
         assertEquals ( 2, new Sql ( sql, "select count(*) from triggers where rollerId=1" ).go ().single ().getInt ( 1 ) );
 
-        model.updateRoller ( new RollerBuilder().group ( "G1" ).name ( "R1" ).definition ( "3d6" ).addLabel ( 7, "Jackie" ).addTrigger ( "Fred", "A==10" ).build () );
+        model.updateRoller ( "G1", new RollerBuilder ( "G1" ).name ( "R1" ).definition ( "3d6" ).addLabel ( 7, "Jackie" ).addTrigger ( "Fred", "A==10" ).build () );
         
         rollers = model.rollers ( "G1" );
 
-        assertEquals ( "G1", rollers.get ( 0 ).groupName );
         assertEquals ( "R1", rollers.get ( 0 ).rollerName );
         assertEquals ( "3d6", rollers.get ( 0 ).definition );
         
@@ -585,7 +583,7 @@ public class SqliteRollerModelTest
         assertEquals ( 2, new Sql ( sql, "select count(*) from labels where rollerId=1" ).go ().single ().getInt ( 1 ) );
         assertEquals ( 2, new Sql ( sql, "select count(*) from triggers where rollerId=1" ).go ().single ().getInt ( 1 ) );
         
-        model.deleteRoller ( rollers.get ( 0 ) );
+        model.deleteRoller ( "G1", rollers.get ( 0 ) );
                 
         assertEquals ( 6, model.rollers ( "G1" ).size() );
         
@@ -601,7 +599,7 @@ public class SqliteRollerModelTest
     @Test
     public void testDeleteMiddleRoller() throws DiceRollerException, SQLException
     {        
-        model.deleteRoller ( rollers.get ( 3 ) );
+        model.deleteRoller ( "G1", rollers.get ( 3 ) );
         
         assertEquals ( 6, model.rollers ( "G1" ).size() );
         
@@ -614,7 +612,7 @@ public class SqliteRollerModelTest
     @Test
     public void testDeleteLastRoller() throws DiceRollerException, SQLException
     {
-        model.deleteRoller ( rollers.get ( 6 ) );
+        model.deleteRoller ( "G1", rollers.get ( 6 ) );
         
         assertEquals ( 6, model.rollers ( "G1" ).size() );
         
@@ -627,7 +625,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_First_To_Last() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 0 ), 7 );
+        model.moveRoller ( "G1", rollers.get ( 0 ), 7 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -648,7 +646,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_First_Down_One() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 0 ), 2 );
+        model.moveRoller ( "G1", rollers.get ( 0 ), 2 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -669,7 +667,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_First_Down_Two() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 0 ), 3 );
+        model.moveRoller ( "G1", rollers.get ( 0 ), 3 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -690,7 +688,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_First_In_Place() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 0 ), 1 );
+        model.moveRoller ( "G1", rollers.get ( 0 ), 1 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -711,7 +709,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Last_To_First() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 6 ), 1 );
+        model.moveRoller ( "G1", rollers.get ( 6 ), 1 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -732,7 +730,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Last_Up_One() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 6 ), 6 );
+        model.moveRoller ( "G1", rollers.get ( 6 ), 6 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -753,7 +751,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Last_Up_Two() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 6 ), 5 );
+        model.moveRoller ( "G1", rollers.get ( 6 ), 5 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -774,7 +772,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Last_In_Place() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 6 ), 7 );
+        model.moveRoller ( "G1", rollers.get ( 6 ), 7 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -795,7 +793,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Middle_To_First() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 3 ), 1 );
+        model.moveRoller ( "G1", rollers.get ( 3 ), 1 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -816,7 +814,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Middle_To_Last() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 3 ), 7 );
+        model.moveRoller ( "G1", rollers.get ( 3 ), 7 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -837,7 +835,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Middle_Up_One() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 3 ), 3 );
+        model.moveRoller ( "G1", rollers.get ( 3 ), 3 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -858,7 +856,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Middle_Up_Two() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 3 ), 2 );
+        model.moveRoller ( "G1", rollers.get ( 3 ), 2 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -879,7 +877,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Middle_Down_One() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 3 ), 5 );
+        model.moveRoller ( "G1", rollers.get ( 3 ), 5 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -900,7 +898,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Middle_Down_Two() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 3 ), 6 );
+        model.moveRoller ( "G1", rollers.get ( 3 ), 6 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -921,7 +919,7 @@ public class SqliteRollerModelTest
     @Test
     public void testMoveRoller_Middle_In_Place() throws DiceRollerException, SQLException
     {
-        model.moveRoller ( rollers.get ( 3 ), 4 );
+        model.moveRoller ( "G1", rollers.get ( 3 ), 4 );
         
         rollers = model.rollers ( "G1" );
                 
@@ -946,11 +944,11 @@ public class SqliteRollerModelTest
         
         assertEquals ( 2, variables.size () );
         
-        assertEquals ( "V1", variables.get ( 0 ).name );
-        assertEquals ( 3, variables.get ( 0 ).value );
+        assertEquals ( "V1", variables.get ( 0 ).name() );
+        assertEquals ( 3, variables.get ( 0 ).value() );
         
-        assertEquals ( "V2", variables.get ( 1 ).name );
-        assertEquals ( 6, variables.get ( 1 ).value );
+        assertEquals ( "V2", variables.get ( 1 ).name() );
+        assertEquals ( 6, variables.get ( 1 ).value() );
                 
         variables = new ArrayList<> ();
         
@@ -962,8 +960,8 @@ public class SqliteRollerModelTest
         
         assertEquals ( 1, variables.size () );
 
-        assertEquals ( "Jackie", variables.get ( 0 ).name );
-        assertEquals ( 10, variables.get ( 0 ).value );
+        assertEquals ( "Jackie", variables.get ( 0 ).name() );
+        assertEquals ( 10, variables.get ( 0 ).value() );
         
         // Test Lua Context
         

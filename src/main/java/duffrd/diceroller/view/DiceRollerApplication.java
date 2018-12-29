@@ -1,6 +1,7 @@
 package duffrd.diceroller.view;
 
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -42,7 +43,7 @@ public class DiceRollerApplication extends Application
 		DiceRollerApplication.launch ( args );
 	}
 
-	public DiceRollerApplication ()
+	public DiceRollerApplication () throws URISyntaxException
 	{
 	    instance = this;
 	}
@@ -55,11 +56,6 @@ public class DiceRollerApplication extends Application
 	public Stage mainStage()
 	{
 	    return mainStage;
-	}
-	
-	public RollerModel model()
-	{
-	    return model;
 	}
 	
 	@Override

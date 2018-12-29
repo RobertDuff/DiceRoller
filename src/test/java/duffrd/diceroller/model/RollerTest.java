@@ -25,7 +25,7 @@ public class RollerTest
     @Test
     public void testSimpleInteger () throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "Simple" ).definition ( "d6" ).build ();
+        Roller roller = new RollerBuilder( "x" ).name ( "Simple" ).definition ( "d6" ).build ();
 
         assertArrayEquals ( new long[] { 0, 1, 1, 1, 1, 1, 1 }, roller.probabilities () );
 
@@ -61,7 +61,7 @@ public class RollerTest
     @Test
     public void testSimpleBoolean () throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "Bool" ).definition ( "d20 > 10" ).build();		
+        Roller roller = new RollerBuilder ( "x" ).name ( "Bool" ).definition ( "d20 > 10" ).build();		
 
         assertArrayEquals ( new long[] { 10, 10 }, roller.probabilities () );
 
@@ -89,7 +89,7 @@ public class RollerTest
     @Test
     public void testSuccess () throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "Test" ).definition ( "d20 > 10" ).addLabel ( 0, "Failure" ).addLabel ( 1, "Success" ).build();
+        Roller roller = new RollerBuilder ( "x" ).name ( "Test" ).definition ( "d20 > 10" ).addLabel ( 0, "Failure" ).addLabel ( 1, "Success" ).build();
 
         assertArrayEquals ( new long[] { 10, 10 }, roller.probabilities () );
 
@@ -120,7 +120,7 @@ public class RollerTest
     @Test
     public void testNamed () throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "Named" ).definition ( "d3+5" ).addLabel ( 6, "Red" ).addLabel ( 7, "Green" ).addLabel ( 8, "Blue" ).build ();
+        Roller roller = new RollerBuilder ( "x" ).name ( "Named" ).definition ( "d3+5" ).addLabel ( 6, "Red" ).addLabel ( 7, "Green" ).addLabel ( 8, "Blue" ).build ();
 
         assertArrayEquals ( new long[] { 0, 0, 0, 0, 0, 0, 1, 1, 1 }, roller.probabilities () );
 
@@ -156,7 +156,7 @@ public class RollerTest
     @Test
     public void testTriggered () throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "Trig" ).definition ( "( d3 + 1 ) * 2" ).addTrigger ( "Big", "OUTCOME >= 6" ).addTrigger ( "Three", "A == 3" ).build ();		
+        Roller roller = new RollerBuilder ( "x" ).name ( "Trig" ).definition ( "( d3 + 1 ) * 2" ).addTrigger ( "Big", "OUTCOME >= 6" ).addTrigger ( "Three", "A == 3" ).build ();		
 
         assertArrayEquals ( new long[] { 0, 0, 0, 0, 1, 0, 1, 0, 1 }, roller.probabilities () );
 
@@ -192,7 +192,7 @@ public class RollerTest
     @Test
     public void testTwo () throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "Two" ).definition ( "d4 + 3d6" ).build();
+        Roller roller = new RollerBuilder ( "x" ).name ( "Two" ).definition ( "d4 + 3d6" ).build();
 
         assertArrayEquals ( new long[] { 0, 0, 0, 0, 1, 4, 10, 20, 34, 52, 71, 88, 100, 104, 100, 88, 71, 52, 34, 20, 10, 4, 1 }, roller.probabilities () );
 
@@ -240,7 +240,7 @@ public class RollerTest
     @Test
     public void testVar() throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder ().group ( "x" ).name ( "Var" ).definition ( "V1 * d4 + V2" ).build();
+        Roller roller = new RollerBuilder ( "x" ).name ( "Var" ).definition ( "V1 * d4 + V2" ).build();
 
         lua.set ( "V1", 1 );
         lua.set ( "V2", 0 );
@@ -305,7 +305,7 @@ public class RollerTest
     @Test
     public void testSimpleWeighted() throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "Weighted" ).definition ( "d[ 3, 7, 11 ]" ).addTrigger ( "Flag", "A <= 6" ).build();
+        Roller roller = new RollerBuilder ( "x" ).name ( "Weighted" ).definition ( "d[ 3, 7, 11 ]" ).addTrigger ( "Flag", "A <= 6" ).build();
 
         assertArrayEquals ( new long[] { 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1 }, roller.probabilities () );
 
@@ -332,7 +332,7 @@ public class RollerTest
     @Test
     public void testMultipleWeighted() throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "Weighted" ).definition ( "3d[ 3, 7, 11 ]" ).addLabel ( 21, "Twenty-One" ).build();
+        Roller roller = new RollerBuilder ( "x" ).name ( "Weighted" ).definition ( "3d[ 3, 7, 11 ]" ).addLabel ( 21, "Twenty-One" ).build();
 
         assertArrayEquals ( new long[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 3, 0, 0, 0, 6, 0, 0, 0, 7, 0, 0, 0, 6, 0, 0, 0, 3, 0, 0, 0, 1 }, roller.probabilities () );
 
@@ -358,7 +358,7 @@ public class RollerTest
     @Test
     public void testDuplicate () throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "Duplicate" ).definition ( "10 * ( d10 - 1 ) + d10" ).build ();
+        Roller roller = new RollerBuilder ( "x" ).name ( "Duplicate" ).definition ( "10 * ( d10 - 1 ) + d10" ).build ();
         
         assertArrayEquals ( new long[] { 
                 0, 
@@ -387,8 +387,25 @@ public class RollerTest
     @Test
     public void testBestOf() throws DiceRollerException, ProbablityCalculationCancelledException
     {
-        Roller roller = new RollerBuilder().group ( "x" ).name ( "BestOf" ).definition ( "1,2d2" ).build ();
+        Roller roller = new RollerBuilder ( "x" ).name ( "BestOf" ).definition ( "1,2d2" ).build ();
         
         assertArrayEquals ( new long[] { 0, 1, 3 }, roller.probabilities () );
+    }
+    
+    @Test
+    public void testDegenerate() throws DiceRollerException, ProbablityCalculationCancelledException
+    {
+        Roller roller = new RollerBuilder ( "x" ).name ( "Degenerate" ).definition ( "5" ).build ();
+
+        assertArrayEquals ( new long[] { 0, 0, 0, 0, 0, 1 }, roller.probabilities () );
+
+        roller.roll ();
+
+        assertEquals ( "5",          roller.outcomeProperty ().get () );
+        assertEquals ( "",           roller.triggersProperty ().get () );
+        assertEquals ( "Degenerate", History.history ().historyProperty ().get ( 0 ).rollerNameProperty ().get () );
+        assertEquals ( "5",          History.history ().historyProperty ().get ( 0 ).outcomeProperty ().get () );
+        assertEquals ( "",           History.history ().historyProperty ().get ( 0 ).triggersProperty ().get () );
+        assertEquals ( "",           History.history ().historyProperty ().get ( 0 ).facesProperty ().get () );
     }
 }

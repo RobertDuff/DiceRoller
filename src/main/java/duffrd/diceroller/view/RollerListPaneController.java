@@ -2,12 +2,14 @@ package duffrd.diceroller.view;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import com.sun.javafx.scene.control.skin.ListViewSkin;
 
 import duffrd.diceroller.model.DiceRollerException;
 import duffrd.diceroller.model.Roller;
+import duffrd.diceroller.model.RollerModel;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -16,12 +18,15 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -48,10 +53,14 @@ public class RollerListPaneController implements Initializable
     @FXML
     public ListView<Roller> rollerList;
 
+    private RollerModel model;
     private ObjectProperty<Roller> rollerProperty;
+    private String groupName;
 
-    public RollerListPaneController ( ObjectProperty<Roller> rollerProperty )
+    public RollerListPaneController ( RollerModel model, String groupName, ObjectProperty<Roller> rollerProperty )
     {
+        this.model = model;
+        this.groupName = groupName;
         this.rollerProperty = rollerProperty;
     }
 
@@ -149,9 +158,18 @@ public class RollerListPaneController implements Initializable
                                 {
                                     Roller roller = getItem ();
                                     
+                                    Alert alert = new Alert ( AlertType.CONFIRMATION );
+                                    alert.setTitle ( "Roller: " + roller.name () );
+                                    alert.setHeaderText ( "You are about to delete the " + roller.name () + " roller. This cannot be undone!" );
+                                    alert.setContentText ( "Are you sure?" );
+                                    Optional<ButtonType> button = alert.showAndWait ();
+                                    
+                                    if ( !button.isPresent () || button.get () != ButtonType.OK )
+                                        return;
+                                    
                                     try
                                     {
-                                        DiceRollerApplication.instance ().model ().deleteRoller ( roller );
+                                        model.deleteRoller ( groupName, roller );
                                     }
                                     catch ( DiceRollerException e1 )
                                     {

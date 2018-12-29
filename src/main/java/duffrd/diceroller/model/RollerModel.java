@@ -2,6 +2,8 @@ package duffrd.diceroller.model;
 
 import java.util.List;
 
+import javafx.collections.ObservableList;
+
 public interface RollerModel
 {
     public List<String> groupNames() throws DiceRollerException;
@@ -13,13 +15,13 @@ public interface RollerModel
 
     public List<Roller> rollers ( String group ) throws DiceRollerException;
 
-    public void createRoller ( Roller roller ) throws DiceRollerException;
+    public void createRoller ( String group, Roller roller ) throws DiceRollerException;
     public void renameRoller ( String groupName, String origName, String newName ) throws DiceRollerException;
-    public void updateRoller ( Roller roller ) throws DiceRollerException;
-    public void moveRoller ( Roller roller, int position ) throws DiceRollerException;
-    public void deleteRoller ( Roller roller ) throws DiceRollerException;
+    public void updateRoller ( String group, Roller roller ) throws DiceRollerException;
+    public void moveRoller ( String group, Roller roller, int position ) throws DiceRollerException;
+    public void deleteRoller ( String group, Roller roller ) throws DiceRollerException;
     
-    public List<Variable> groupVariables ( String groupName ) throws DiceRollerException;
+    public ObservableList<Variable> groupVariables ( String groupName ) throws DiceRollerException;
     
     public void updateGroupVariables ( String groupName, List<Variable> variables ) throws DiceRollerException;
 }

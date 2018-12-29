@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import duffrd.diceroller.model.Variable;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
@@ -29,20 +31,28 @@ public class VariablesDialog extends Dialog<ButtonType>
 {    
     public class VariableNode extends HBox
     {
-        public Variable variable;
+        private ObjectProperty<Variable> variable = new SimpleObjectProperty<> ();
+        private Label nameLabel = new Label();
+        private TextField valueField = new TextField();
         
-        public VariableNode ( Variable var )
-        {
-            variable = var;
-
-            Label nameLabel = new Label();
-            nameLabel.setText ( variable.name );
-
-            TextField valueField = new TextField();
-            valueField.setTextFormatter ( new TextFormatter<Integer> ( new IntegerStringConverter() ) );
-            valueField.setText ( String.valueOf ( variable.value ) );
-
-            valueField.textProperty ().addListener ( ( a, o, n ) -> variable.value = Integer.valueOf ( n ) );
+        public VariableNode()
+        {            
+            variable.addListener ( ( object, oldValue, newValue ) -> 
+            {
+                nameLabel.textProperty ().unbind ();
+                
+                if ( newValue != null )
+                {
+                    nameLabel.textProperty ().bind ( newValue.nameProperty () );
+                    valueField.setText ( String.valueOf ( newValue.value () ) );
+                }
+            } );
+            
+            valueField.setTextFormatter ( new TextFormatter<> ( new IntegerStringConverter() ) );
+            valueField.textProperty ().addListener ( ( object, oldValue, newValue ) -> 
+            {
+                variable.getValue ().valueProperty ().setValue ( Integer.valueOf ( newValue ) );
+            } );
             
             Region spacing = new Region();
             getChildren ().addAll ( nameLabel, spacing, valueField );
@@ -55,21 +65,48 @@ public class VariablesDialog extends Dialog<ButtonType>
                 ContextMenu menu = new ContextMenu ();
 
                 MenuItem delete = new MenuItem ();
-                delete.setText ( "Delete Variable \"" + variable.name + "\"" );
-                delete.setOnAction ( a -> varList.getItems ().remove ( variable ) );
+                delete.setText ( "Delete Variable \"" + variable.getValue ().name () + "\"" );
+                delete.setOnAction ( a -> varList.getItems ().remove ( ( ( VariableNode ) event.getSource () ).variable () ) );
 
                 menu.getItems ().add ( delete );
                 menu.show ( ( Node ) event.getSource (), event.getScreenX (), event.getScreenY () );
             } );
         }
+        
+        public String name()
+        {
+            return variable.getValue ().name ();
+        }
+        
+        public int value()
+        {
+            return variable.getValue ().value ();
+        }
+        
+        public Variable variable()
+        {
+            return variable.get ();
+        }
+        
+        public VariableNode variable ( Variable var )
+        {
+            variableProperty ().set ( var );
+            return this;
+        }
+        
+        public ObjectProperty<Variable> variableProperty()
+        {
+            return variable;
+        }
     }
 
     public class VarCell extends ListCell<Variable>
     {
+        private VariableNode node = new VariableNode ();
+        
         public VarCell ()
         {
             super ();
-            VarCell thisCell = this;
 
             setOnDragDetected ( event ->
             {                
@@ -82,14 +119,14 @@ public class VariablesDialog extends Dialog<ButtonType>
 
                 ClipboardContent content = new ClipboardContent ();
 
-                content.putString ( getItem().name );
+                content.putString ( getItem().name() );
 
                 dragboard.setContent ( content );
             } );
 
             setOnDragOver ( event -> 
             {                
-                if ( event.getGestureSource () != thisCell && event.getDragboard ().hasString () )
+                if ( event.getGestureSource () != event.getGestureTarget () && event.getDragboard ().hasString () )
                     event.acceptTransferModes ( TransferMode.MOVE );
 
                 event.consume ();
@@ -97,13 +134,13 @@ public class VariablesDialog extends Dialog<ButtonType>
 
             setOnDragEntered ( event ->
             {                
-                if ( event.getGestureSource () != thisCell && event.getDragboard ().hasString () )
+                if ( event.getGestureSource () != event.getGestureTarget () && event.getDragboard ().hasString () )
                     setOpacity ( 0.3 );
             } );
 
             setOnDragExited ( event ->
             {                
-                if ( event.getGestureSource () != thisCell && event.getDragboard ().hasString () )
+                if ( event.getGestureSource () != event.getGestureTarget () && event.getDragboard ().hasString () )
                     setOpacity ( 1.0 );
             } );
 
@@ -146,22 +183,13 @@ public class VariablesDialog extends Dialog<ButtonType>
                 return;
             }
 
-            setGraphic ( new VariableNode ( item ) );
+            node.variable ( item );
+            setGraphic ( node );
         }     
 
         private void relocate ( List<Variable> list, Variable from, Variable to )
         {
             relocate ( list, list.indexOf ( from ), list.indexOf ( to ) );
-        }
-        
-        private void relocate ( List<Variable> list, Variable from, int to )
-        {
-            relocate ( list, list.indexOf ( from ), to );
-        }
-        
-        private void relocate ( List<Variable> list, int from, Variable to )
-        {
-            relocate ( list, from, list.indexOf ( to ) );
         }
         
         private void relocate ( List<Variable> list, int from, int to )

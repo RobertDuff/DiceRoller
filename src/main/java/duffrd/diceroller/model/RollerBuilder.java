@@ -4,41 +4,92 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaError;
+
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import utility.lua.Function;
 import utility.lua.LuaProvider;
 
 public class RollerBuilder
 {
+    protected static Globals validationLua;
+    
     static final Pattern DICE_REGEX = Pattern.compile ( "(((-?\\d+),)?(\\d+))?[Dd](\\d+|\\[([^\\[]+)\\])" );
     static final Pattern COMPARISON_REGEX = Pattern.compile ( "[=<>!~]" );
 
-    protected Roller roller;
+    protected String groupName;
+    protected Globals lua;
     
-    public RollerBuilder()
+    protected StringProperty nameProperty = new SimpleStringProperty ();
+    protected StringProperty definitionProperty = new SimpleStringProperty ();
+    
+    protected ObservableMap<Integer,String> labelMap = FXCollections.observableHashMap ();
+    protected ObservableMap<String,String> triggerMap = FXCollections.observableHashMap ();
+    
+    public RollerBuilder ( String groupName )
     {
-        roller = new Roller();
+        this.groupName = groupName;
+        lua = LuaProvider.lua ( groupName );
     }
     
-    public RollerBuilder group ( String group )
+    public StringProperty nameProperty()
     {
-        roller.groupName = group;
-        roller.lua = LuaProvider.lua ( group );
-        
-        return this;
+        return nameProperty;
+    }
+    
+    public StringProperty definitionProperty()
+    {
+        return definitionProperty;
+    }
+    
+    public ObservableMap<Integer,String> labelMap()
+    {
+        return labelMap;
+    }
+    
+    public ObservableMap<String,String> triggerMap()
+    {
+        return triggerMap;
     }
     
     public RollerBuilder name ( String name )
     {
-        roller.rollerName = name;
+        nameProperty.set ( name );
         return this;
     }
     
-    public RollerBuilder definition ( String def ) throws DiceRollerException
+    public RollerBuilder definition ( String def )
     {
-        roller.definition = def;
+        definitionProperty.set ( def );
+        return this;
+    }
+    
+    public RollerBuilder addLabel ( int value, String label )
+    {
+        labelMap.put ( value, label );
+        return this;
+    }
+    
+    public RollerBuilder addTrigger ( String name, String def )
+    {
+        triggerMap.put ( name, def );
+        return this;
+    }
+    
+    public Roller build() throws DiceRollerException
+    {
+        Roller roller = new Roller();
+                
+        roller.rollerName = nameProperty.get ();
+        roller.definition = definitionProperty.get ();
         
-        String luaCode = def;
+        String luaCode = roller.definition;
         
         int argIndex = 1;
         Matcher matcher;
@@ -107,38 +158,41 @@ public class RollerBuilder
             dice.canceledProperty ().bind ( roller.canceledProperty () );
         }
         
-        roller.expression = new Function ( roller.lua, "local dice = {...}", "return ", luaCode );
+        try
+        {
+            roller.expression = new Function ( lua, "local dice = {...}", "return ", luaCode );
+        }
+        catch ( LuaError e )
+        {
+            throw new DiceRollerException ( e );
+        }
         
-        return this;
-    }
-    
-    public RollerBuilder addLabel ( int value, String label )
-    {
-        roller.labels.put ( value, label );
-        return this;
-    }
-    
-    public RollerBuilder addTrigger ( String name, String def )
-    {
-        roller.triggers.put ( name, new Roller.Expression ( def, new Function ( roller.lua, 
-                "local __ARGS__ = { ... }",
-                "local OUTCOME = __ARGS__[ 1 ]",
-                "local A = __ARGS__[ 2 ]",
-                "local B = __ARGS__[ 3 ]",
-                "local C = __ARGS__[ 4 ]",
-                "local D = __ARGS__[ 5 ]",
-                "local E = __ARGS__[ 6 ]",
-                "local F = __ARGS__[ 7 ]",
-                "local G = __ARGS__[ 8 ]",
-                "local H = __ARGS__[ 9 ]",
-                "local I = __ARGS__[ 10 ]",
-                "local H = __ARGS__[ 11 ]",
-                "return ", def ) ) );
-        return this;
-    }
-    
-    public Roller build() throws DiceRollerException
-    {
+        roller.labels.putAll ( labelMap.entrySet ().stream ().filter ( e -> !e.getValue ().isEmpty () ).collect ( Collectors.toMap ( Map.Entry::getKey, Map.Entry::getValue ) ) );
+        
+        roller.triggers = triggerMap.entrySet ().stream ().collect ( Collectors.toMap ( Map.Entry::getKey, e -> new Trigger ( lua, e.getValue() ) ) );
+        
         return roller;
+    }
+    
+    public boolean isDefinitionValid ( String definition )
+    {
+        if ( definition == null || definition.equals ( "" ) )
+            return true;
+        
+        if ( validationLua == null )
+            validationLua = LuaProvider.newLua ();
+        
+        String code = definition.replaceAll ( DICE_REGEX.pattern (), "X" );
+        
+        try
+        {
+            validationLua.load ( "return " + code );
+        }
+        catch ( Exception e )
+        {
+            return false;
+        }
+        
+        return true;
     }
 }

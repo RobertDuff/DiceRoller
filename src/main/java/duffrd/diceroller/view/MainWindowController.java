@@ -7,7 +7,6 @@ import java.util.ResourceBundle;
 
 import duffrd.diceroller.model.DiceRollerException;
 import duffrd.diceroller.model.Roller;
-import duffrd.diceroller.model.RollerBuilder;
 import duffrd.diceroller.model.RollerModel;
 import duffrd.diceroller.model.Variable;
 import javafx.application.Platform;
@@ -77,8 +76,8 @@ public class MainWindowController implements Initializable
 	public void initialize ( URL location, ResourceBundle resources )
 	{
         newRollerItem.setOnAction ( event -> newRoller ( chooser.getExpandedPane () ) );
-        editRollerItem.setOnAction ( event -> editRoller ( rollerProperty.get () ) );
-        deleteRollerItem.setOnAction ( event -> deleteRoller ( rollerProperty.get () ) );
+        editRollerItem.setOnAction ( event -> editRoller ( chooser.getExpandedPane ().getText (), rollerProperty.get () ) );
+        deleteRollerItem.setOnAction ( event -> deleteRoller ( chooser.getExpandedPane ().getText (), rollerProperty.get () ) );
 	    
 	    newGroupItem.setOnAction ( event -> newGroup() );
 	    renameGroupItem.setOnAction ( e -> renameGroup ( chooser.getExpandedPane () ) );
@@ -120,22 +119,20 @@ public class MainWindowController implements Initializable
 	}
 
 	private void newRoller ( TitledPane groupPane )
-    {
-        TextInputDialog dialog = new TextInputDialog ();
-        dialog.setTitle ( "Create a New Roller" );
-        dialog.setHeaderText ( "Please Enter the Name for the new Roller." );
-        dialog.setContentText ( "Roller Name: " );
-        
-        Optional<String> name = dialog.showAndWait ();
-        
-        if ( !name.isPresent () )
+    {        
+	    RollerWizard wizard = new RollerWizard ( groupPane.getText () );
+	    Optional<ButtonType> result = wizard.showAndWait ();
+	    
+	    System.out.println ( result );
+	    
+        if ( !result.isPresent () || result.get () != ButtonType.FINISH )
             return;
         
         try
         {
-            Roller roller = new RollerBuilder ().group ( groupPane.getText () ).name ( name.get () ).definition ( "1d4" ).build ();
+            Roller roller = wizard.roller ();
             
-            model.createRoller ( roller );
+            model.createRoller ( groupPane.getText (), roller );
             
             @SuppressWarnings ( "unchecked" )
             ListView<Roller> lv = ( ListView<Roller> ) ( ( AnchorPane ) groupPane.getContent () ).getChildren ().get ( 0 );
@@ -148,7 +145,7 @@ public class MainWindowController implements Initializable
         }
     }
 
-    private void editRoller ( Roller roller )
+    private void editRoller ( String group, Roller roller )
     {
         if ( roller == null )
             return;
@@ -165,7 +162,7 @@ public class MainWindowController implements Initializable
         
         try
         {            
-            model.renameRoller ( roller.group (), roller.name (), name.get () );
+            model.renameRoller ( group, roller.name (), name.get () );
             roller.name ( name.get () );
             
             @SuppressWarnings ( "unchecked" )
@@ -179,7 +176,7 @@ public class MainWindowController implements Initializable
         }
     }
 
-    private void deleteRoller ( Roller roller )
+    private void deleteRoller ( String group, Roller roller )
     {
         if ( roller == null )
             return;
@@ -195,7 +192,7 @@ public class MainWindowController implements Initializable
         
         try
         {
-            model.deleteRoller ( roller );
+            model.deleteRoller ( group, roller );
         }
         catch ( DiceRollerException e )
         {
@@ -240,7 +237,7 @@ public class MainWindowController implements Initializable
 
     private TitledPane createGroupPane ( String groupName ) throws IOException, DiceRollerException
     {
-        RollerListPaneController rollerListController = new RollerListPaneController ( rollerProperty );
+        RollerListPaneController rollerListController = new RollerListPaneController ( model, groupName, rollerProperty );
         FXMLLoader rollerListLoader = new FXMLLoader ( getClass().getResource ( "RollerListPane.fxml" ) );
         rollerListLoader.setController ( rollerListController );
         final TitledPane groupPane = rollerListLoader.load ();

@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import utility.lua.LuaProvider;
 import utility.sql.Sql;
 
@@ -127,7 +129,7 @@ public class SqliteRollerModel implements RollerModel
                 
                 // Initialize Group Variables in the Lua Context for each Group.
                 for ( Variable variable : groupVariables ( name ) )
-                    LuaProvider.lua ( name ).set ( variable.name, variable.value );
+                    LuaProvider.lua ( name ).set ( variable.name(), variable.value() );
             }
             
             return groupNames;
@@ -230,11 +232,11 @@ public class SqliteRollerModel implements RollerModel
          
             for ( ResultSet rollerRow : new Sql ( sql, "select id, name, definition from rollers where groupId=( select id from groups where name=? ) order by sequence" ).go ( group ) )
             {
-                RollerBuilder builder = new RollerBuilder();
+                RollerBuilder builder = new RollerBuilder ( group );
                 
                 int rollerId = rollerRow.getInt ( 1 );
                 
-                builder.group ( group ).name ( rollerRow.getString ( 2 ) ).definition ( rollerRow.getString ( 3 ) );
+                builder.name ( rollerRow.getString ( 2 ) ).definition ( rollerRow.getString ( 3 ) );
                 
                 for ( ResultSet labelRow : new Sql ( sql, "select value, label from labels where rollerId=? order by value" ).go ( rollerId  ) )
                     builder.addLabel ( labelRow.getInt ( 1 ), labelRow.getString ( 2 ) );
@@ -254,14 +256,14 @@ public class SqliteRollerModel implements RollerModel
     }
 
     @Override
-    public void createRoller ( Roller roller ) throws DiceRollerException
+    public void createRoller ( String group, Roller roller ) throws DiceRollerException
     {
         try
         {           
             sql.setAutoCommit ( false );
                         
             // Get Group Id
-            int groupId = new Sql ( sql, "select id from groups where name=?" ).go ( roller.groupName ).single ().getInt ( 1 );
+            int groupId = new Sql ( sql, "select id from groups where name=?" ).go ( group ).single ().getInt ( 1 );
             
             //
             // Create Roller
@@ -320,7 +322,7 @@ public class SqliteRollerModel implements RollerModel
     }
     
     @Override
-    public void updateRoller ( Roller roller ) throws DiceRollerException
+    public void updateRoller ( String group, Roller roller ) throws DiceRollerException
     {
         // Does not change Group Name, Roller Name or Sequence Number.
         
@@ -329,7 +331,7 @@ public class SqliteRollerModel implements RollerModel
             sql.setAutoCommit ( false );
 
             // Get Roller ID
-            int rollerId = new Sql ( sql, "select id from rollers where groupId = ( select id from groups where name=? ) and name = ?" ).go ( roller.groupName, roller.rollerName ).single ().getInt ( 1 );
+            int rollerId = new Sql ( sql, "select id from rollers where groupId = ( select id from groups where name=? ) and name = ?" ).go ( group, roller.rollerName ).single ().getInt ( 1 );
             
             // Update Roller Definition
             new Sql ( sql, "update rollers set definition=? where id=?" ).go ( roller.definition, rollerId );
@@ -379,7 +381,7 @@ public class SqliteRollerModel implements RollerModel
     }
 
     @Override
-    public void moveRoller ( Roller roller, int position ) throws DiceRollerException
+    public void moveRoller ( String group, Roller roller, int position ) throws DiceRollerException
     {
         try
         {
@@ -387,7 +389,7 @@ public class SqliteRollerModel implements RollerModel
             // Get Original Position
             //
             
-            ResultSet rRow = new Sql ( sql, "select id, sequence from rollers where groupId = ( select id from groups where name=? ) and name=?" ).go ( roller.groupName, roller.rollerName ).single ();
+            ResultSet rRow = new Sql ( sql, "select id, sequence from rollers where groupId = ( select id from groups where name=? ) and name=?" ).go ( group, roller.rollerName ).single ();
     
             int id = rRow.getInt ( 1 );
             int origPos = rRow.getInt ( 2 );
@@ -423,11 +425,11 @@ public class SqliteRollerModel implements RollerModel
     }
 
     @Override
-    public void deleteRoller ( Roller roller ) throws DiceRollerException
+    public void deleteRoller ( String group, Roller roller ) throws DiceRollerException
     {
         try
         {
-            new Sql ( sql, "delete from rollers where groupId=( select id from groups where name=? ) and name=?" ).go ( roller.groupName, roller.rollerName );
+            new Sql ( sql, "delete from rollers where groupId=( select id from groups where name=? ) and name=?" ).go ( group, roller.rollerName );
         }
         catch ( SQLException e )
         {
@@ -436,9 +438,9 @@ public class SqliteRollerModel implements RollerModel
     }
 
     @Override
-    public List<Variable> groupVariables ( String groupName ) throws DiceRollerException
+    public ObservableList<Variable> groupVariables ( String groupName ) throws DiceRollerException
     {
-        List<Variable> variables = new ArrayList<>();
+        ObservableList<Variable> variables = FXCollections.observableArrayList ();
 
         try
         {    
@@ -473,10 +475,10 @@ public class SqliteRollerModel implements RollerModel
             for ( Variable variable : variables )
             {
                 // Update SQL Database
-                insertVariable.go ( groupId, variable.name, variable.value, sequence++ );
+                insertVariable.go ( groupId, variable.name(), variable.value(), sequence++ );
                 
                 // Update Lua Context for Group
-                LuaProvider.lua ( groupName ).set ( variable.name, variable.value );
+                LuaProvider.lua ( groupName ).set ( variable.name(), variable.value() );
             }
         }
         catch ( SQLException e )

@@ -9,7 +9,6 @@ import java.util.Random;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaValue;
 
 import javafx.beans.property.BooleanProperty;
@@ -28,30 +27,16 @@ public class Roller
 {
     private static final Logger logger = LogManager.getLogger ( MethodHandles.lookup().lookupClass() );
 
-    public static class Expression
-    {
-        public String definition;
-        public Function function;
-        
-        public Expression ( String def, Function fn )
-        {
-            definition = def;
-            function = fn;
-        }
-    }
-    
 	static Random random = new Random();
 	
-	String groupName;
 	String rollerName;
 	String definition;
 
-	Globals lua;
 	Function expression;
 	
 	List<Dice> dice = new ArrayList<>();
 	
-	Map<String,Expression> triggers = new HashMap<>();
+	Map<String,Trigger> triggers = new HashMap<>();
 	Map<Integer,String> labels = new HashMap<>();
 	
 	private StringProperty outcomeProperty = new SimpleStringProperty ();
@@ -61,11 +46,6 @@ public class Roller
     
 	private long[] probabilities;
 	
-    public String group()
-    {
-        return groupName;
-    }
-    
     public String name()
     {
         return rollerName;
@@ -269,27 +249,12 @@ public class Roller
 	}
 
     @Override
-    public int hashCode ()
-    {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ( ( groupName == null )? 0 : groupName.hashCode () );
-        result = prime * result + ( ( rollerName == null )? 0 : rollerName.hashCode () );
-        return result;
-    }
-
-    @Override
     public boolean equals ( Object obj )
     {
         if ( this == obj ) return true;
         if ( obj == null ) return false;
         if ( getClass () != obj.getClass () ) return false;
         Roller other = ( Roller ) obj;
-        if ( groupName == null )
-        {
-            if ( other.groupName != null ) return false;
-        }
-        else if ( !groupName.equals ( other.groupName ) ) return false;
         if ( rollerName == null )
         {
             if ( other.rollerName != null ) return false;
