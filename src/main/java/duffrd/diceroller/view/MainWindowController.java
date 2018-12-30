@@ -2,6 +2,7 @@ package duffrd.diceroller.view;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -10,6 +11,7 @@ import duffrd.diceroller.model.Roller;
 import duffrd.diceroller.model.RollerModel;
 import duffrd.diceroller.model.Variable;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -29,7 +31,12 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.TitledPane;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
+import utility.arrays.Relocator;
 
 public class MainWindowController implements Initializable
 {	
@@ -74,14 +81,23 @@ public class MainWindowController implements Initializable
 	
 	@Override
 	public void initialize ( URL location, ResourceBundle resources )
-	{
+	{	    
         newRollerItem.setOnAction ( event -> newRoller ( chooser.getExpandedPane () ) );
+        newRollerItem.disableProperty ().bind ( Bindings.isNull ( chooser.expandedPaneProperty () ) );
+        
         editRollerItem.setOnAction ( event -> editRoller ( chooser.getExpandedPane ().getText (), rollerProperty.get () ) );
+        editRollerItem.disableProperty ().bind ( Bindings.isNull ( rollerProperty ) );
+        
         deleteRollerItem.setOnAction ( event -> deleteRoller ( chooser.getExpandedPane ().getText (), rollerProperty.get () ) );
+        deleteRollerItem.disableProperty ().bind ( Bindings.isNull ( rollerProperty ) );
 	    
 	    newGroupItem.setOnAction ( event -> newGroup() );
+	    
 	    renameGroupItem.setOnAction ( e -> renameGroup ( chooser.getExpandedPane () ) );
-	    deleteGroupItem.setOnAction ( event -> deleteGroup ( chooser.getExpandedPane () ) );
+	    renameGroupItem.disableProperty ().bind ( Bindings.isNull ( chooser.expandedPaneProperty () ) );
+
+        deleteGroupItem.setOnAction ( event -> deleteGroup ( chooser.getExpandedPane () ) );
+        deleteGroupItem.disableProperty ().bind ( Bindings.isNull ( chooser.expandedPaneProperty () ) );
 	    
 		try
 		{
@@ -120,6 +136,9 @@ public class MainWindowController implements Initializable
 
 	private void newRoller ( TitledPane groupPane )
     {        
+	    if ( groupPane == null )
+	        return;
+	    
 	    RollerWizard wizard = new RollerWizard ( groupPane.getText () );
 	    Optional<ButtonType> result = wizard.showAndWait ();
 	    
@@ -266,6 +285,80 @@ public class MainWindowController implements Initializable
             
             menu.show ( ( Node ) event.getSource (), event.getScreenX (), event.getScreenY () );
         } );
+        
+        groupPane.setOnDragDetected ( event ->
+        {                
+            event.consume ();
+            TitledPane pane = ( TitledPane ) event.getSource ();
+            
+            Dragboard dragboard = pane.startDragAndDrop ( TransferMode.MOVE );
+
+            ClipboardContent content = new ClipboardContent ();
+
+            content.putString ( pane.getText () );
+
+            dragboard.setContent ( content );
+        } );
+
+        groupPane.setOnDragOver ( event -> 
+        {                
+            if ( event.getGestureSource () != event.getGestureTarget () && event.getDragboard ().hasString () )
+                event.acceptTransferModes ( TransferMode.MOVE );
+
+            event.consume ();
+        } );
+
+        groupPane.setOnDragEntered ( event ->
+        {                
+            if ( event.getGestureSource () != event.getGestureTarget () && event.getDragboard ().hasString () )
+            {
+                TitledPane pane = ( TitledPane ) event.getSource ();
+                pane.setOpacity ( 0.3 );
+            }
+        } );
+
+        groupPane.setOnDragExited ( event ->
+        {                
+            if ( event.getGestureSource () != event.getGestureTarget () && event.getDragboard ().hasString () )
+            {
+                TitledPane pane = ( TitledPane ) event.getSource ();
+                pane.setOpacity ( 1.0 );
+            }
+        } );
+
+        groupPane.setOnDragDropped ( event -> 
+        {                
+            Dragboard dragboard = event.getDragboard ();
+            boolean success = false;
+
+            if ( dragboard.hasString () )
+            {                    
+                List<TitledPane> panes = chooser.getPanes ();
+                
+                TitledPane source = ( TitledPane ) event.getGestureSource ();
+                TitledPane target = ( TitledPane ) event.getGestureTarget ();
+
+                int from = panes.indexOf ( source );
+                int to = panes.indexOf ( target );
+                
+                try
+                {
+                    model.moveGroup ( source.getText (), to+1 );
+                    Relocator.relocate ( panes, from, to );
+                    success = true;
+                }
+                catch ( DiceRollerException e )
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
+            
+            event.setDropCompleted ( success );
+            event.consume ();
+        } );
+        
+        groupPane.setOnDragDone ( DragEvent::consume );
         
         rollerListController.rollerListProperty ().addAll ( model.rollers ( groupName ) );
         

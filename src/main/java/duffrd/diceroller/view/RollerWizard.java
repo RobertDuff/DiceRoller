@@ -21,6 +21,7 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
+import javafx.util.converter.DefaultStringConverter;
 
 public class RollerWizard extends Dialog<ButtonType>
 {
@@ -47,6 +48,7 @@ public class RollerWizard extends Dialog<ButtonType>
             
             TextField nameField = new TextField();
             builder.nameProperty().bind ( nameField.textProperty () );
+            nameField.requestFocus ();
             AnchorPane.setTopAnchor ( nameField, 30.0 );
             AnchorPane.setLeftAnchor ( nameField, 150.0 );
             AnchorPane.setRightAnchor ( nameField, 30.0 );
@@ -82,6 +84,8 @@ public class RollerWizard extends Dialog<ButtonType>
             
             setContent ( pane );
         }
+        
+        
     }
     
     protected class LabelsPane extends DialogPane
@@ -270,11 +274,42 @@ public class RollerWizard extends Dialog<ButtonType>
             definitionColumn.setText ( "Definition" );
             definitionColumn.setPrefWidth ( 200 );
             definitionColumn.setCellValueFactory ( cd -> Bindings.createStringBinding ( () -> cd.getValue ().definition ) );
-            definitionColumn.setCellFactory ( TextFieldTableCell.forTableColumn() );
+            definitionColumn.setCellFactory ( cb ->
+            {
+              return new TextFieldTableCell<Entry,String>( new DefaultStringConverter () )
+              {
+                @Override
+                public void updateItem ( String item, boolean empty )
+                {
+                    super.updateItem ( item, empty );
+                    
+                    if ( empty || item == null )
+                    {
+                        setText ( null );
+                    }
+                    else
+                    {
+                        setText ( item );
+                        
+                        if ( builder.isDefinitionValid ( item ) )
+                        {
+                            System.out.println ( "Valid: " + this.getStyle () );
+                            this.setStyle ( "" );
+                        }
+                        else
+                        {
+                            System.out.println ( "Invalid" );
+                            this.setStyle ( "-fx-background-color: pink" );                        
+                        }
+                    }
+                }                  
+              };  
+            } );
+            
             definitionColumn.setOnEditCommit ( event -> 
             {
                 builder.triggerMap ().put ( event.getRowValue ().triggerName, event.getNewValue () );
-            });
+            } );
 
             triggerTable.getColumns ().add ( triggerNameColumn );
             triggerTable.getColumns ().add ( definitionColumn );

@@ -280,7 +280,7 @@ public class SqliteRollerModel implements RollerModel
             Sql insertTrigger = new Sql ( sql, "insert into triggers values ( ?, ?, ? )" );
             
             for ( String trigger : roller.triggers.keySet () )
-                insertTrigger.go ( rollerId, trigger, roller.triggers.get ( trigger ) );
+                insertTrigger.go ( rollerId, trigger, roller.triggers.get ( trigger ).definition );
         }
         catch ( SQLException e )
         {

@@ -26,6 +26,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.util.converter.IntegerStringConverter;
+import utility.arrays.Relocator;
 
 public class VariablesDialog extends Dialog<ButtonType>
 {    
@@ -159,7 +160,7 @@ public class VariablesDialog extends Dialog<ButtonType>
                     VarCell source = ( VarCell ) event.getGestureSource ();
                     VarCell target = ( VarCell ) event.getGestureTarget ();
 
-                    relocate ( items, source.getItem (), target.getItem () );
+                    Relocator.relocate ( items, items.indexOf ( source.getItem () ), items.indexOf ( target.getItem () ) );
                     
                     success = true;
                 }
@@ -186,29 +187,6 @@ public class VariablesDialog extends Dialog<ButtonType>
             node.variable ( item );
             setGraphic ( node );
         }     
-
-        private void relocate ( List<Variable> list, Variable from, Variable to )
-        {
-            relocate ( list, list.indexOf ( from ), list.indexOf ( to ) );
-        }
-        
-        private void relocate ( List<Variable> list, int from, int to )
-        {
-            // Down
-            if ( from < to )
-            {
-                Variable x = list.get ( from );
-                list.remove ( from );
-                list.add ( to, x );
-            }
-            // Up
-            else if ( from > to )
-            {
-                Variable x = list.get ( from );
-                list.remove ( from );
-                list.add ( to, x );
-            }
-        }
     }
 
     ListView<Variable> varList;
