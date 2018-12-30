@@ -37,7 +37,11 @@
             </MenuBar>
             <SplitPane dividerPositions="0.25" VBox.vgrow="ALWAYS">
                <items>
-                  <Accordion fx:id="chooser" maxWidth="300.0" minWidth="75.0" />
+                  <ScrollPane prefHeight="200.0" prefWidth="200.0">
+                     <content>
+                        <Accordion fx:id="chooser" minWidth="75.0" />
+                     </content>
+                  </ScrollPane>
                   <SplitPane fx:id="detailPane" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0" />
                </items>
             </SplitPane>

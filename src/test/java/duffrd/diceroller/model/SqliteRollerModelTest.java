@@ -8,6 +8,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.junit.After;
@@ -16,6 +17,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import duffrd.diceroller.model.scripts.DbScript;
+import duffrd.diceroller.model.scripts.RollerModelSchema;
 import utility.lua.LuaProvider;
 import utility.sql.Sql;
 
@@ -33,8 +36,10 @@ public class SqliteRollerModelTest
     @Before
     public void before() throws IOException, SQLException, DiceRollerException
     {
+        DbScript initModel = new RollerModelSchema().andThen ( new TestDB () );
+        
         sql = DriverManager.getConnection ( "jdbc:sqlite::memory:" );
-        model = new SqliteRollerModel ( sql, ClassLoader.getSystemResourceAsStream ( TEST_DATA ) );
+        model = new SqliteRollerModel ( sql, initModel );
         rollers = model.rollers ( "G1" );
     }
     
@@ -551,7 +556,7 @@ public class SqliteRollerModelTest
     public void testUpdateRoller() throws DiceRollerException, SQLException
     {
         assertEquals ( "R1", rollers.get ( 0 ).rollerName );
-        assertEquals ( "1D4", rollers.get ( 0 ).definition );
+        assertEquals ( "d4", rollers.get ( 0 ).definition );
         
         assertEquals ( 2, new Sql ( sql, "select count(*) from labels where rollerId=1" ).go ().single ().getInt ( 1 ) );
         assertEquals ( 2, new Sql ( sql, "select count(*) from triggers where rollerId=1" ).go ().single ().getInt ( 1 ) );
@@ -966,5 +971,39 @@ public class SqliteRollerModelTest
         // Test Lua Context
         
         assertEquals ( 10, LuaProvider.lua ( "G1" ).get ( "Jackie" ).toint () );
+    }
+    
+    private class TestDB implements DbScript
+    {
+        @Override
+        public void go ( RollerModel model ) throws DiceRollerException
+        {
+            model.createGroup ( "G1" );
+            model.createGroup ( "G2" );
+            model.createGroup ( "G3" );
+            model.createGroup ( "G4" );
+            model.createGroup ( "G5" );
+            model.createGroup ( "G6" );
+            model.createGroup ( "G7" );
+            
+            model.createRoller ( "G1", 
+                    new RollerBuilder ( "G1" )
+                    .name ( "R1" )
+                    .definition ( "d4" )
+                    .addLabel ( 1, "One" )
+                    .addLabel ( 2, "Two" )
+                    .addTrigger ( "T1", "A == 1" )
+                    .addTrigger ( "T2", "A == 1" )
+                    .build () );
+            
+            model.createRoller ( "G1", new RollerBuilder ( "G1" ).name ( "R2" ).definition ( "d4" ).build () );
+            model.createRoller ( "G1", new RollerBuilder ( "G1" ).name ( "R3" ).definition ( "d4" ).build () );
+            model.createRoller ( "G1", new RollerBuilder ( "G1" ).name ( "R4" ).definition ( "d4" ).build () );
+            model.createRoller ( "G1", new RollerBuilder ( "G1" ).name ( "R5" ).definition ( "d4" ).build () );
+            model.createRoller ( "G1", new RollerBuilder ( "G1" ).name ( "R6" ).definition ( "d4" ).build () );
+            model.createRoller ( "G1", new RollerBuilder ( "G1" ).name ( "R7" ).definition ( "d4" ).build () );
+            
+            model.updateGroupVariables ( "G1", Arrays.asList ( new Variable ( "V1", 3 ), new Variable ( "V2", 6 ) ) );
+        }        
     }
 }

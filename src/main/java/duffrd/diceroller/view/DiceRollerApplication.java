@@ -1,15 +1,19 @@
 package duffrd.diceroller.view;
 
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 import duffrd.diceroller.model.RollerModel;
 import duffrd.diceroller.model.SqliteRollerModel;
+import duffrd.diceroller.model.scripts.DbScript;
+import duffrd.diceroller.model.scripts.DnDRollers;
+import duffrd.diceroller.model.scripts.GeneralRollers;
+import duffrd.diceroller.model.scripts.HeroRollers;
+import duffrd.diceroller.model.scripts.MunchkinRollers;
+import duffrd.diceroller.model.scripts.RollerModelSchema;
 import javafx.animation.PauseTransition;
 import javafx.animation.Transition;
 import javafx.application.Application;
@@ -28,11 +32,6 @@ import javafx.util.Duration;
 
 public class DiceRollerApplication extends Application
 {	
-	private static final String APPLICATION_PROPERTIES_PATH = "/DiceRoller.properties";
-
-	private static final String SHOW_SPLASH_SCREEN_PROPERTY_KEY = "showSplashScreen";
-
-	private static Properties applicationProperties;
 	private static DiceRollerApplication instance;
 	
 	private Stage mainStage;
@@ -57,79 +56,66 @@ public class DiceRollerApplication extends Application
 	{
 	    return mainStage;
 	}
-	
-	@Override
-	public void init () throws Exception
-	{
-		applicationProperties = new Properties ();
-		
-		InputStream propertyStream = getClass().getResourceAsStream ( APPLICATION_PROPERTIES_PATH );
-		
-		if ( propertyStream != null )
-			applicationProperties.load ( propertyStream );
-	}
 
 	@Override
 	public void start ( Stage splashStage ) throws Exception
 	{
-		if ( applicationProperties.getProperty ( SHOW_SPLASH_SCREEN_PROPERTY_KEY, "yes" ).matches ( "(?i:y|yes|t|true)" ) )
-		{
-		    FutureTask<RollerModel> modelTask = new FutureTask<RollerModel>(
-		            new Callable<RollerModel>()
-		            {
-                        @Override
-                        public RollerModel call () throws Exception
-                        {
-                            return new SqliteRollerModel();
-                        }		                
-		            }
-		            );
-		    
-			URL splashImageURL = getClass().getResource ( "splash.bmp" );
-			Image splashImage = new Image ( splashImageURL.toExternalForm () );
-			ImageView splashImageView = new ImageView ( splashImage );
+	    DbScript gen = new GeneralRollers ();
+	    DbScript dnd = new DnDRollers ();
+	    DbScript hero = new HeroRollers ();
+	    DbScript munchkin = new MunchkinRollers ();
+	    
+	    DbScript initModel = new RollerModelSchema ().andThen ( gen ).andThen ( munchkin ).andThen ( dnd ).andThen ( hero );
+	    
+	    FutureTask<RollerModel> modelTask = new FutureTask<RollerModel>(
+	            new Callable<RollerModel>()
+	            {
+	                @Override
+	                public RollerModel call () throws Exception
+	                {
+	                    return new SqliteRollerModel ( initModel );
+	                }		                
+	            } );
 
-			AnchorPane splashPane = new AnchorPane ( splashImageView );
+	    URL splashImageURL = getClass().getResource ( "splash.bmp" );
+	    Image splashImage = new Image ( splashImageURL.toExternalForm () );
+	    ImageView splashImageView = new ImageView ( splashImage );
 
-			Transition splashTransition = new PauseTransition ( Duration.seconds ( 2.5 ) );
+	    AnchorPane splashPane = new AnchorPane ( splashImageView );
 
-			splashTransition.setOnFinished ( e -> 
-			{ 
-			    try
-                {
-                    model = modelTask.get ();
-                }
-                catch ( InterruptedException e1 )
-                {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
-                catch ( ExecutionException e1 )
-                {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
-				splashStage.close (); 
-				openMainStage();
-			} );
+	    Transition splashTransition = new PauseTransition ( Duration.seconds ( 2.5 ) );
 
-			splashTransition.play ();
+	    splashTransition.setOnFinished ( e -> 
+	    { 
+	        try
+	        {
+	            model = modelTask.get ();
+	        }
+	        catch ( InterruptedException e1 )
+	        {
+	            // TODO Auto-generated catch block
+	            e1.printStackTrace();
+	        }
+	        catch ( ExecutionException e1 )
+	        {
+	            // TODO Auto-generated catch block
+	            e1.printStackTrace();
+	        }
+	        splashStage.close (); 
+	        openMainStage();
+	    } );
 
-			Scene splashScene = new Scene ( splashPane );
+	    splashTransition.play ();
 
-			splashStage.setScene ( splashScene );
-			splashStage.initStyle ( StageStyle.TRANSPARENT );
-			splashStage.show();
-			
-			Thread modelThread = new Thread ( modelTask );
-			modelThread.setDaemon ( true );
-			modelThread.start ();
-		}
-		else
-		{
-		    model = new SqliteRollerModel();
-		    openMainStage ();
-		}
+	    Scene splashScene = new Scene ( splashPane );
+
+	    splashStage.setScene ( splashScene );
+	    splashStage.initStyle ( StageStyle.TRANSPARENT );
+	    splashStage.show();
+
+	    Thread modelThread = new Thread ( modelTask );
+	    modelThread.setDaemon ( true );
+	    modelThread.start ();
 	}
 	
 	public void openMainStage()

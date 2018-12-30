@@ -1,5 +1,6 @@
 package duffrd.diceroller.model;
 
+import java.sql.Connection;
 import java.util.List;
 
 import javafx.collections.ObservableList;
@@ -24,4 +25,6 @@ public interface RollerModel
     public ObservableList<Variable> groupVariables ( String groupName ) throws DiceRollerException;
     
     public void updateGroupVariables ( String groupName, List<Variable> variables ) throws DiceRollerException;
+    
+    Connection connection();
 }

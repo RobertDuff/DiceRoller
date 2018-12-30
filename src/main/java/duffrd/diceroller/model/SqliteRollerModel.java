@@ -1,7 +1,6 @@
 package duffrd.diceroller.model;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,12 +8,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
-import java.util.regex.Pattern;
 
+import duffrd.diceroller.model.scripts.DbScript;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import utility.lua.LuaProvider;
@@ -24,93 +21,40 @@ public class SqliteRollerModel implements RollerModel
 {    
     private static final Path DATABASE_DIR_PATH = Paths.get ( System.getenv ( "LOCALAPPDATA" ), "DiceRoller" ).toAbsolutePath ();
     private static final String DATABASE_NAME = "DiceRoller.db";
-        
-    private static final Pattern BEGIN_PATTERN = Pattern.compile ( "\\bbegin\\b", Pattern.CASE_INSENSITIVE );
-    private static final Pattern END_PATTERN = Pattern.compile ( "\\bend\\b\\s*;", Pattern.CASE_INSENSITIVE );
-
-    private static final String SCHEMA_SQL_FILE = "schema.sql";
-    private static final String INIT_DATA_SQL_FILE = "init.sql";
     
     Connection sql;
     
-    public SqliteRollerModel() throws IOException, SQLException
+    public SqliteRollerModel ( DbScript init ) throws DiceRollerException
     {
-        this ( initConnection () );
+        this ( null, init );
     }
     
-    public SqliteRollerModel ( Connection conn ) throws IOException, SQLException
+    public SqliteRollerModel ( Connection conn, DbScript init ) throws DiceRollerException
     {
-        initModel ( conn, 
-                ClassLoader.getSystemResourceAsStream ( SCHEMA_SQL_FILE ), 
-                ClassLoader.getSystemResourceAsStream ( INIT_DATA_SQL_FILE ) );
-    }
-    
-    public SqliteRollerModel ( Connection conn, InputStream dataSource ) throws IOException, SQLException
-    {
-        this ( conn, ClassLoader.getSystemResourceAsStream ( SCHEMA_SQL_FILE ), dataSource );
-    }
-    
-    public SqliteRollerModel ( Connection conn, InputStream schema, InputStream dataSource ) throws IOException, SQLException
-    {
-        initModel ( conn, schema, dataSource );
-    }
-    
-    private static Connection initConnection() throws SQLException, IOException
-    {
-        // Create DB Directory, if necessary
-        Files.createDirectories ( DATABASE_DIR_PATH );
-        
-        // Open DB File
-        Path dbPath = Paths.get ( DATABASE_DIR_PATH.toString(), DATABASE_NAME );
-        
-        return DriverManager.getConnection ( "jdbc:sqlite:" + dbPath.toString() ); 
-    }
-    
-    private void initModel ( Connection conn, InputStream schemaSource, InputStream dataSource ) throws IOException, SQLException
-    {
-        sql = conn;
-        sql.createStatement ().execute ( "pragma foreign_keys = on" );
-        
-        // If the DB file is newly created, then populate it.
-        if ( !sql.createStatement().executeQuery ( "select name from sqlite_master where type = 'table' and name='rollers'" ).next() )
+        try
         {
-            Statement stmt = sql.createStatement ();
-            
-            // Create Schema
-            
-            Scanner schema = new Scanner ( schemaSource );
-            schema.useDelimiter ( ";" );
-            
-            while ( schema.hasNext () )
+            if ( conn == null )
             {
-                String s = schema.next ();
+                // Create DB Directory, if necessary
+                Files.createDirectories ( DATABASE_DIR_PATH );
                 
-                // If the statement contains a BEGIN, then we need to find the END.
-                if ( BEGIN_PATTERN.matcher ( s ).find () )
-                {
-                    schema.useDelimiter ( END_PATTERN );
-                    s = s + schema.next () + "end";
-                    
-                    schema.useDelimiter ( ";" );
-                    
-                    // The delimiter "end;" was left by the last call, so we have to discard it.
-                    schema.next ();
-                }
+                // Open DB File
+                Path dbPath = Paths.get ( DATABASE_DIR_PATH.toString(), DATABASE_NAME );
                 
-                stmt.executeUpdate ( s );
+                sql = DriverManager.getConnection ( "jdbc:sqlite:" + dbPath.toString() );             
             }
+            else
+                sql = conn;
             
-            schema.close ();
+            sql.createStatement ().execute ( "pragma foreign_keys = on" );
             
-            // Populate Default Data
-            
-            Scanner init = new Scanner ( dataSource );
-            init.useDelimiter ( ";" );
-            
-            while ( init.hasNext () )
-                stmt.executeUpdate ( init.next () );
-            
-            init.close ();
+            // If the DB file is newly created, then populate it.
+            if ( !sql.createStatement().executeQuery ( "select name from sqlite_master where type = 'table' and name='rollers'" ).next() )
+                init.go ( this );
+        }
+        catch ( IOException | SQLException e )
+        {
+            throw new DiceRollerException ( e );
         }
     }
     
@@ -485,5 +429,11 @@ public class SqliteRollerModel implements RollerModel
         {
             throw new DiceRollerException ( e ); 
         }
+    }
+
+    @Override
+    public Connection connection ()
+    {
+        return sql;
     }
 }
