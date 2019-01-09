@@ -1,12 +1,14 @@
 package duffrd.diceroller.model;
 
-import static utility.arrays.ArrayConverter.intArray;
-
 import java.lang.invoke.MethodHandles;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import utility.math.Polynomial;
@@ -106,9 +108,9 @@ public class Dice
             for ( int roll : rolls )
                 count *= die.probabilities[ roll ];
             
-            Integer[] sorted = intArray ( Arrays.copyOf ( rolls, rolls.length ) );
-            Arrays.sort ( sorted );
-            int sum = Arrays.asList ( sorted ).subList ( start, end ).stream ().mapToInt ( i -> i.intValue () ).sum ();
+            List<Integer> sorted = Arrays.stream ( rolls ).boxed ().collect ( Collectors.toList () );
+            Collections.sort ( sorted );
+            int sum = sorted.subList ( start, end ).stream ().mapToInt ( i -> i ).sum ();
 
             probabilities[ sum ] += count;                
 

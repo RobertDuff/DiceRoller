@@ -2,10 +2,12 @@ package duffrd.diceroller.model;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,8 +20,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import utility.arrays.ArrayConverter;
-import utility.join.Join;
 import utility.lua.Function;
 import utility.lua.VarargsBuilder;
 
@@ -118,7 +118,7 @@ public class Roller
 	    {
 	        logger.debug ( "Adding Counts" );
 	        
-	        LuaValue l = expression.call ( ArrayConverter.objectArray ( rolls ) );
+	        LuaValue l = expression.call ( new VarargsBuilder().addAll ( Arrays.stream ( rolls ).boxed ().collect ( Collectors.toList () ) ).build () );
 	        int outcome = l.isboolean ()? ( l.toboolean ()? 1 : 0 ) : l.toint ();
 	        
 	        if ( !prob.containsKey ( outcome ) ) prob.put ( outcome, 0L );
@@ -211,7 +211,7 @@ public class Roller
 			if ( ( Boolean ) triggers.get ( triggerName ).function.call ( triggerArgs.build() ).toboolean() == true )
 				triggerList.add ( triggerName );
 		
-		String triggerString = Join.join ( ", ", triggerList );
+		String triggerString = triggerList.toString ().replaceAll ( "[\\[\\]]", "" );
 		
 		if ( !testMode )
 		    History.history ().record ( rollerName, outcome, triggerString, historyFacesBuilder.toString () );

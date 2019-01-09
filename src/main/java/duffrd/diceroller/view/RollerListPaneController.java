@@ -37,7 +37,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import utility.arrays.Relocator;
+import utility.arrays.ListRearranger;
 
 public class RollerListPaneController implements Initializable
 {
@@ -118,7 +118,7 @@ public class RollerListPaneController implements Initializable
                     try
                     {
                         model.moveRoller ( groupName, source.getItem (), to+1 );
-                        Relocator.relocate ( items, from, to );                        
+                        items.sort ( ListRearranger.move ( items, from, to ) );
                         success = true;
                     }
                     catch ( DiceRollerException e )

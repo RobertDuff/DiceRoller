@@ -1,6 +1,7 @@
 package duffrd.diceroller.view;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
@@ -10,6 +11,7 @@ import duffrd.diceroller.model.DiceRollerException;
 import duffrd.diceroller.model.Roller;
 import duffrd.diceroller.model.RollerModel;
 import duffrd.diceroller.model.Variable;
+import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
@@ -36,7 +38,7 @@ import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
-import utility.arrays.Relocator;
+import utility.arrays.ListRearranger;
 
 public class MainWindowController implements Initializable
 {	
@@ -69,13 +71,21 @@ public class MainWindowController implements Initializable
 
     @FXML
     public MenuItem deleteGroupItem;
+    
+    @FXML
+    public MenuItem helpItem;
+    
+    @FXML
+    public MenuItem aboutItem;
 	
+    private HostServices hostServices;
 	private RollerModel model;
 	
 	private ObjectProperty<Roller> rollerProperty = new SimpleObjectProperty<> ();
 
-	public MainWindowController ( RollerModel model )
+	public MainWindowController ( HostServices hostServices, RollerModel model )
 	{
+	    this.hostServices = hostServices;
 	    this.model = model;
 	}
 	
@@ -132,6 +142,18 @@ public class MainWindowController implements Initializable
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+		
+		helpItem.setOnAction ( event -> 
+		{ 
+		    try
+            {
+                hostServices.showDocument ( ClassLoader.getSystemResource ( "help/help.html" ).toURI ().toString () );
+            }
+            catch ( URISyntaxException e1 )
+            {
+                e1.printStackTrace();
+            } 
+		} );
 	}
 
 	private void newRoller ( TitledPane groupPane )
@@ -344,7 +366,7 @@ public class MainWindowController implements Initializable
                 try
                 {
                     model.moveGroup ( source.getText (), to+1 );
-                    Relocator.relocate ( panes, from, to );
+                    panes.sort ( ListRearranger.move ( panes, from, to ) );
                     success = true;
                 }
                 catch ( DiceRollerException e )

@@ -15,7 +15,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javafx.scene.chart.XYChart;
-import utility.arrays.ArrayConverter;
 
 public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<String,Double>>>
 {
@@ -61,7 +60,7 @@ public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<S
         
         updateProgress ( 1,  1 );
         
-        long totalOutcomes = Arrays.asList ( ArrayConverter.longArray ( eq ) ).stream ().mapToLong ( l -> l ).sum ();
+        long totalOutcomes = Arrays.stream ( eq ).sum ();
         
         long[] lt = new long[ eq.length ];
         long[] le = new long[ eq.length ];

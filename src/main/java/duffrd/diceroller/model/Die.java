@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import utility.join.Join;
-
 public class Die
 {
 	int faces;
@@ -71,7 +69,7 @@ public class Die
 		StringBuilder b = new StringBuilder ();
 		
 		b.append ( "{{" );
-		b.append ( Join.join ( ", ", probabilities ) );
+		b.append ( Arrays.toString ( probabilities ) );
 		b.append ( "}}" );
 		
 		return b.toString ();

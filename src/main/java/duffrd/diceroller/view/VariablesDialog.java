@@ -26,7 +26,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.util.converter.IntegerStringConverter;
-import utility.arrays.Relocator;
+import utility.arrays.ListRearranger;
 
 public class VariablesDialog extends Dialog<ButtonType>
 {    
@@ -160,7 +160,7 @@ public class VariablesDialog extends Dialog<ButtonType>
                     VarCell source = ( VarCell ) event.getGestureSource ();
                     VarCell target = ( VarCell ) event.getGestureTarget ();
 
-                    Relocator.relocate ( items, items.indexOf ( source.getItem () ), items.indexOf ( target.getItem () ) );
+                    items.sort ( ListRearranger.move ( items, items.indexOf ( source.getItem () ), items.indexOf ( target.getItem () ) ) );
                     
                     success = true;
                 }

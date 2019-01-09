@@ -29,8 +29,8 @@
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
                   <items>
-                        <MenuItem mnemonicParsing="false" text="Dice Roller Help" />
-                    <MenuItem mnemonicParsing="false" text="About" />
+                        <MenuItem fx:id="helpItem" mnemonicParsing="false" text="Dice Roller Help" />
+                    <MenuItem fx:id="aboutItem" mnemonicParsing="false" text="About" />
                   </items>
                 </Menu>
               </menus>
