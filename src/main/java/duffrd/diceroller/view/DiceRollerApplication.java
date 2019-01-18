@@ -2,18 +2,14 @@ package duffrd.diceroller.view;
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.concurrent.Callable;
+import java.sql.Connection;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
-import duffrd.diceroller.model.RollerModel;
-import duffrd.diceroller.model.SqliteRollerModel;
-import duffrd.diceroller.model.scripts.DbScript;
-import duffrd.diceroller.model.scripts.DnDRollers;
-import duffrd.diceroller.model.scripts.GeneralRollers;
-import duffrd.diceroller.model.scripts.HeroRollers;
-import duffrd.diceroller.model.scripts.MunchkinRollers;
-import duffrd.diceroller.model.scripts.RollerModelSchema;
+import duffrd.diceroller.model.Model;
+import duffrd.diceroller.model.ModelLoader;
+import duffrd.diceroller.model.sqlite.SqliteDbProvider;
+import duffrd.diceroller.model.sqlite.SqliteModelLoader;
 import javafx.animation.PauseTransition;
 import javafx.animation.Transition;
 import javafx.application.Application;
@@ -35,7 +31,7 @@ public class DiceRollerApplication extends Application
 	private static DiceRollerApplication instance;
 	
 	private Stage mainStage;
-	private RollerModel model;
+	private Model model;
 	
 	public static void main ( String[] args )
 	{
@@ -60,23 +56,6 @@ public class DiceRollerApplication extends Application
 	@Override
 	public void start ( Stage splashStage ) throws Exception
 	{
-	    DbScript gen = new GeneralRollers ();
-	    DbScript dnd = new DnDRollers ();
-	    DbScript hero = new HeroRollers ();
-	    DbScript munchkin = new MunchkinRollers ();
-	    
-	    DbScript initModel = new RollerModelSchema ().andThen ( gen ).andThen ( munchkin ).andThen ( dnd ).andThen ( hero );
-	    
-	    FutureTask<RollerModel> modelTask = new FutureTask<RollerModel>(
-	            new Callable<RollerModel>()
-	            {
-	                @Override
-	                public RollerModel call () throws Exception
-	                {
-	                    return new SqliteRollerModel ( initModel );
-	                }		                
-	            } );
-
 	    URL splashImageURL = getClass().getResource ( "splash.bmp" );
 	    Image splashImage = new Image ( splashImageURL.toExternalForm () );
 	    ImageView splashImageView = new ImageView ( splashImage );
@@ -84,6 +63,13 @@ public class DiceRollerApplication extends Application
 	    AnchorPane splashPane = new AnchorPane ( splashImageView );
 
 	    Transition splashTransition = new PauseTransition ( Duration.seconds ( 2.5 ) );
+        
+	    FutureTask<Model> modelTask = new FutureTask<Model>( () -> 
+	    {
+	        Connection db = SqliteDbProvider.provideStandardDB ();
+	        ModelLoader loader = new SqliteModelLoader ( db );	        
+	        return loader.load ();
+	    } );
 
 	    splashTransition.setOnFinished ( e -> 
 	    { 

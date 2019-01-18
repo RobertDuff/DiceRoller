@@ -1,67 +1,100 @@
 package duffrd.diceroller.model;
 
+import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaValue;
+
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 public class Variable
 {
-    private StringProperty name = new SimpleStringProperty ();
-    private IntegerProperty value = new SimpleIntegerProperty ();
+    private ObjectProperty<Globals> luaProperty = new SimpleObjectProperty<> ();
+    protected StringProperty nameProperty = new SimpleStringProperty ();
+    protected IntegerProperty valueProperty = new SimpleIntegerProperty ();
+    @SuppressWarnings ( "unused" )
+    private ObjectBinding<Void> updateProperty;
     
     public Variable ()
     {
+        nameProperty.addListener ( ( object, oldValue, newValue ) -> 
+        {
+            if ( luaProperty.get () == null )
+                return;
+            
+            if ( oldValue == null || oldValue.isEmpty () )
+                return;
+            
+            luaProperty.get ().set ( oldValue, LuaValue.NIL );
+        } );
+        
+        updateProperty = Bindings.createObjectBinding ( () -> 
+        {
+            if ( luaProperty.get () == null )
+                return null;
+            
+            if ( nameProperty.get () == null || nameProperty.get ().isEmpty () )
+                return null;
+            
+            luaProperty.get ().set ( nameProperty.get (), valueProperty.get () );
+            
+            return null;
+        }, luaProperty, nameProperty, valueProperty );
     }
     
-    public Variable ( String name, int value )
+    public Globals lua()
     {
-        this.name.setValue ( name );
-        this.value.setValue ( value );
+        return luaProperty.get ();
+    }
+    
+    public Variable lua ( Globals lua )
+    {
+        luaProperty.set ( lua );
+        updateProperty.get ();
+        return this;
     }
     
     public String name()
     {
-        return name.getValue ();
+        return nameProperty.getValue ();
     }
     
     public Variable name ( String name )
     {
-        this.name.set ( name );
+        this.nameProperty.set ( name );
+        updateProperty.get ();
         return this;
     }
     
     public int value()
     {
-        return value.getValue ();
+        return valueProperty.getValue ();
     }
     
     public Variable value ( int value )
     {
-        this.value.set ( value );
+        this.valueProperty.set ( value );
+        updateProperty.get ();
         return this;
     }
     
-    public ReadOnlyStringProperty nameProperty()
+    public ObjectProperty<Globals> luaProperty()
     {
-        return name;
+        return luaProperty;
+    }
+    
+    public StringProperty nameProperty()
+    {
+        return nameProperty;
     }
     
     public IntegerProperty valueProperty()
     {
-        return value;
-    }
-    
-    public Variable nameProperty ( StringProperty prop )
-    {
-        name = prop;
-        return this;
-    }
-    
-    public Variable valueProperty ( IntegerProperty prop )
-    {
-        value = prop;
-        return this;
+        return valueProperty;
     }
 }

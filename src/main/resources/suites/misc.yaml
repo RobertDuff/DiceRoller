@@ -1,0 +1,11 @@
+---
+suite: Miscellaneous
+
+groups:
+  - group: Coins
+    rollers:
+      - name: Coin Flip
+        definition: d2
+        labels:
+          1: Heads
+          2: Tails

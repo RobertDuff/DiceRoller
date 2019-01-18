@@ -66,12 +66,6 @@ public class Die
 	@Override
 	public String toString()
 	{
-		StringBuilder b = new StringBuilder ();
-		
-		b.append ( "{{" );
-		b.append ( Arrays.toString ( probabilities ) );
-		b.append ( "}}" );
-		
-		return b.toString ();
+	    return Arrays.stream ( probabilities ).boxed ().map ( l -> String.valueOf ( l ) ).collect ( Collectors.joining ( " ", "[ ", " ]" ) );
 	}
 }

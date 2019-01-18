@@ -1,0 +1,98 @@
+---
+suite: Basic Rolls
+
+triggers:
+  &CS Critical Success: A == 20
+  &CF Critical Fail: A == 1
+    
+groups:
+  - group: D4s
+    rollers:
+      - { name:  1 D4,   definition:   d4 }
+      - { name:  2 D4s,  definition:  2d4 }
+      - { name:  3 D4s,  definition:  3d4 }
+      - { name:  4 D4s,  definition:  4d4 }
+      - { name:  5 D4s,  definition:  5d4 }
+      - { name:  6 D4s,  definition:  6d4 }
+      - { name:  7 D4s,  definition:  7d4 }
+      - { name:  8 D4s,  definition:  8d4 }
+      - { name:  9 D4s,  definition:  9d4 }
+      - { name: 10 D4s,  definition: 10d4 }
+
+  - group: D6s
+    rollers:
+      - { name:  1 D6,   definition:   d6 }
+      - { name:  2 D6s,  definition:  2d6 }
+      - { name:  3 D6s,  definition:  3d6 }
+      - { name:  4 D6s,  definition:  4d6 }
+      - { name:  5 D6s,  definition:  5d6 }
+      - { name:  6 D6s,  definition:  6d6 }
+      - { name:  7 D6s,  definition:  7d6 }
+      - { name:  8 D6s,  definition:  8d6 }
+      - { name:  9 D6s,  definition:  9d6 }
+      - { name: 10 D6s,  definition: 10d6 }
+
+  - group: D8s
+    rollers:
+      - { name:  1 D8,   definition:   d8 }
+      - { name:  2 D8s,  definition:  2d8 }
+      - { name:  3 D8s,  definition:  3d8 }
+      - { name:  4 D8s,  definition:  4d8 }
+      - { name:  5 D8s,  definition:  5d8 }
+      - { name:  6 D8s,  definition:  6d8 }
+      - { name:  7 D8s,  definition:  7d8 }
+      - { name:  8 D8s,  definition:  8d8 }
+      - { name:  9 D8s,  definition:  9d8 }
+      - { name: 10 D8s,  definition: 10d8 }
+
+  - group: D10s
+    rollers:
+      - { name:  1 D10,   definition:   d10 }
+      - { name:  2 D10s,  definition:  2d10 }
+      - { name:  3 D10s,  definition:  3d10 }
+      - { name:  4 D10s,  definition:  4d10 }
+      - { name:  5 D10s,  definition:  5d10 }
+      - { name:  6 D10s,  definition:  6d10 }
+      - { name:  7 D10s,  definition:  7d10 }
+      - { name:  8 D10s,  definition:  8d10 }
+      - { name:  9 D10s,  definition:  9d10 }
+      - { name: 10 D10s,  definition: 10d10 }
+
+  - group: D12s
+    rollers:
+      - { name:  1 D12,   definition:   d12 }
+      - { name:  2 D12s,  definition:  2d12 }
+      - { name:  3 D12s,  definition:  3d12 }
+      - { name:  4 D12s,  definition:  4d12 }
+      - { name:  5 D12s,  definition:  5d12 }
+      - { name:  6 D12s,  definition:  6d12 }
+      - { name:  7 D12s,  definition:  7d12 }
+      - { name:  8 D12s,  definition:  8d12 }
+      - { name:  9 D12s,  definition:  9d12 }
+      - { name: 10 D12s,  definition: 10d12 }
+      
+  - group: D20s
+    rollers:
+      - { name: Minus 6,   definition: d20-6,  triggers: [ *CS, *CF ] }
+      - { name: Minus 5,   definition: d20-5,  triggers: [ *CS, *CF ] }
+      - { name: Minus 4,   definition: d20-4,  triggers: [ *CS, *CF ] }
+      - { name: Minus 3,   definition: d20-3,  triggers: [ *CS, *CF ] }
+      - { name: Minus 2,   definition: d20-2,  triggers: [ *CS, *CF ] }
+      - { name: Minus 1,   definition: d20-1,  triggers: [ *CS, *CF ] }
+      - { name: Plus Zero, definition: d20,    triggers: [ *CS, *CF ] }
+      - { name: Plus 1,    definition: d20+1,  triggers: [ *CS, *CF ] }
+      - { name: Plus 2,    definition: d20+2,  triggers: [ *CS, *CF ] }
+      - { name: Plus 3,    definition: d20+3,  triggers: [ *CS, *CF ] }
+      - { name: Plus 4,    definition: d20+4,  triggers: [ *CS, *CF ] }
+      - { name: Plus 5,    definition: d20+5,  triggers: [ *CS, *CF ] }
+      - { name: Plus 6,    definition: d20+6,  triggers: [ *CS, *CF ] }
+      - { name: Plus 7,    definition: d20+7,  triggers: [ *CS, *CF ] }
+      - { name: Plus 8,    definition: d20+8,  triggers: [ *CS, *CF ] }
+      - { name: Plus 9,    definition: d20+9,  triggers: [ *CS, *CF ] }
+      - { name: Plus 10,   definition: d20+10, triggers: [ *CS, *CF ] }
+      
+  - group: Percentiles
+    rollers:
+      - { name: 0..99,  definition: d100-1 }
+      - { name: 1..100, definition: d100   }
+ 

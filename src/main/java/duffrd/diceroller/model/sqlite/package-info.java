@@ -5,4 +5,4 @@
  * @author robdu
  *
  */
-package duffrd.diceroller.model.scripts;
+package duffrd.diceroller.model.sqlite;

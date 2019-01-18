@@ -366,7 +366,7 @@ public class RollerWizard extends Dialog<ButtonType>
             
             try
             {
-                probabilities = builder.build ().probabilities ();
+                probabilities = builder.build ().calculateProbabilities ();
             }
             catch ( ProbablityCalculationCancelledException | DiceRollerException e )
             {

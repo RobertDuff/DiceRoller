@@ -3,14 +3,14 @@ package duffrd.diceroller.view;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import duffrd.diceroller.model.History;
-import duffrd.diceroller.model.HistoryEntry;
+import duffrd.diceroller.model.Outcome;
+import duffrd.diceroller.model.Roller;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.collections.ListChangeListener;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -28,38 +28,45 @@ public class OutcomePaneController implements Initializable
 	@FXML
 	public Label triggerLabel;
 
+	private ObjectProperty<Outcome> outcomeProperty = new SimpleObjectProperty<> ();
+	
 	/**
 	 * This animation is used to indicate that the value of a the outcome has changed, in case the new value is the same as the old value.
 	 */
 	private Animation animation;
 
-	public void setProperties ( ReadOnlyStringProperty outcomeProperty, ReadOnlyStringProperty triggerProperty )
+	public void bind ( Roller roller )
 	{
-		if ( outcomeProperty == null )
+		if ( roller == null )
 		{
-			outcomeLabel.textProperty ().unbind ();
-			outcomeLabel.setText ( "" );
+		    outcomeProperty.unbind ();
+		    outcomeProperty.set ( null );
 		}
 		else
-			outcomeLabel.textProperty ().bind ( outcomeProperty );
-		
-		if ( triggerProperty == null )
 		{
-			triggerLabel.textProperty ().unbind ();
-			triggerLabel.setText ( "" );
+		    outcomeProperty.bind ( roller.outcomeProperty () );
 		}
-		else
-			triggerLabel.textProperty ().bind ( triggerProperty );
 	}
 
 	@Override
 	public void initialize ( URL location, ResourceBundle resources )
-	{
-		buildChangeAnimation();
-	}
-
-	private void buildChangeAnimation()
-	{
+	{	    
+	    outcomeProperty.addListener ( ( a, o, n ) -> 
+	    {
+	        if ( n == null )
+	        {
+	            outcomeLabel.setText ( "" );
+	            triggerLabel.setText ( "" );
+	        }
+	        else
+	        {
+	            outcomeLabel.setText ( n.outcome () );
+	            triggerLabel.setText ( n.triggers () );
+	            animation.stop ();
+	            animation.play ();
+	        }
+	    } );
+	    
 		Timeline timeline = new Timeline();
 
 		//
@@ -83,21 +90,5 @@ public class OutcomePaneController implements Initializable
 		timeline.setAutoReverse ( false );
 
 		animation = timeline;
-
-		//
-		// It would be best to trigger the animation on the setting of the outcome property, but since the 
-		// value of the outcome could be the same as the previous roll, the StringProperty won't trigger if the same value
-		// is set again.  So we trigger on adding an entry to the history.
-		//
-		History.history ().historyProperty ().addListener ( ( ListChangeListener.Change<? extends HistoryEntry> c ) ->
-		{
-			c.next ();
-			
-			if ( c.wasAdded () )
-			{
-				animation.stop ();
-				animation.play ();
-			}
-		} );
 	}
 }

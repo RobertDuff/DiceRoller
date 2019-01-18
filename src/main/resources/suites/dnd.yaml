@@ -1,0 +1,116 @@
+---
+suite: "Dungeons & Dragons 3.5"
+
+variables:
+  - StrengthModifier
+  - DexterityModifier
+  - ConsitutionModifier
+  - IntelligenceModifier
+  - WisdomModifier
+  - CharismaModifier
+  - AppraiseModifier
+  - BalanceModifier
+  - BluffModifier
+  - ClimbModifier
+  - ConcentrationModifier
+  - CraftModifier
+  - DiplomacyModifier
+  - DisguiseModifier
+  - EscapeArtistModifier
+  - ForgeryModifier
+  - GatherInformationModifier
+  - HealModifier
+  - HideModifier
+  - IntimidateModifier
+  - JumpModifier
+  - ListenModifier
+  - MoveSilentlyModifier
+  - PerformModifier
+  - RideModifier
+  - SearchModifier
+  - SenseMotiveModifier
+  - SpotModifier
+  - SurvivalModifier
+  - SwimModifier
+  - UseRopeModifier
+
+triggers:
+  &BP Brownie Point: A == 20
+  &SP Sympathy Point: A ==  1
+    
+groups:
+  - group: General
+    rollers:
+      - { name: Ability Roll, definition: "3,4d6" }
+        
+  - group: D20s
+    rollers:
+      - { name: Minus 6,   definition: d20-6,  triggers: [ *BP, *SP ] }
+      - { name: Minus 5,   definition: d20-5,  triggers: [ *BP, *SP ] }
+      - { name: Minus 4,   definition: d20-4,  triggers: [ *BP, *SP ] }
+      - { name: Minus 3,   definition: d20-3,  triggers: [ *BP, *SP ] }
+      - { name: Minus 2,   definition: d20-2,  triggers: [ *BP, *SP ] }
+      - { name: Minus 1,   definition: d20-1,  triggers: [ *BP, *SP ] }
+      - { name: Plus Zero, definition: d20,    triggers: [ *BP, *SP ] }
+      - { name: Plus 1,    definition: d20+1,  triggers: [ *BP, *SP ] }
+      - { name: Plus 2,    definition: d20+2,  triggers: [ *BP, *SP ] }
+      - { name: Plus 3,    definition: d20+3,  triggers: [ *BP, *SP ] }
+      - { name: Plus 4,    definition: d20+4,  triggers: [ *BP, *SP ] }
+      - { name: Plus 5,    definition: d20+5,  triggers: [ *BP, *SP ] }
+      - { name: Plus 6,    definition: d20+6,  triggers: [ *BP, *SP ] }
+      - { name: Plus 7,    definition: d20+7,  triggers: [ *BP, *SP ] }
+      - { name: Plus 8,    definition: d20+8,  triggers: [ *BP, *SP ] }
+      - { name: Plus 9,    definition: d20+9,  triggers: [ *BP, *SP ] }
+      - { name: Plus 10,   definition: d20+10, triggers: [ *BP, *SP ] }
+        
+  - group: Karma Points
+    rollers:
+      - name: Brownie Point
+        definition: d20 >= 17
+        labels:
+          0: Too Bad
+          1: Bring On The Good Stuff!
+          
+      - name: Sympathy Point
+        definition: d20 <= 4
+        labels:
+          0: Wheew!
+          1: That's Gonna Sting!
+
+  - group: Ability Checks
+    rollers:
+      - { name: Strength Check,           definition: d20 + StrengthModifier,          triggers: [ *BP, *SP ] }
+      - { name: Dexterity Check,          definition: d20 + DexterityModifier,         triggers: [ *BP, *SP ] }
+      - { name: Consitution Check,        definition: d20 + ConsitutionModifier,       triggers: [ *BP, *SP ] }
+      - { name: Intelligence Check,       definition: d20 + IntelligenceModifier,      triggers: [ *BP, *SP ] }
+      - { name: Wisdom Check,             definition: d20 + WisdomModifier,            triggers: [ *BP, *SP ] }
+      - { name: Charisma Check,           definition: d20 + CharismaModifier,          triggers: [ *BP, *SP ] }
+
+  - group: Untrained Skill Checks
+    rollers:
+      - { name: Appraise Check,           definition: d20 + AppraiseModifier,          triggers: [ *BP, *SP ] }
+      - { name: Balance Check,            definition: d20 + BalanceModifier,           triggers: [ *BP, *SP ] }
+      - { name: Bluff Check,              definition: d20 + BluffModifier,             triggers: [ *BP, *SP ] }
+      - { name: Climb Check,              definition: d20 + ClimbModifier,             triggers: [ *BP, *SP ] }
+      - { name: Concentration Check,      definition: d20 + ConcentrationModifier,     triggers: [ *BP, *SP ] }
+      - { name: Craft Check,              definition: d20 + CraftModifier,             triggers: [ *BP, *SP ] }
+      - { name: Diplomacy Check,          definition: d20 + DiplomacyModifier,         triggers: [ *BP, *SP ] }
+      - { name: Disguise Check,           definition: d20 + DisguiseModifier,          triggers: [ *BP, *SP ] }
+      - { name: Escape Artist Check,      definition: d20 + EscapeArtistModifier,      triggers: [ *BP, *SP ] }
+      - { name: Forgery Check,            definition: d20 + ForgeryModifier,           triggers: [ *BP, *SP ] }
+      - { name: Gather Information Check, definition: d20 + GatherInformationModifier, triggers: [ *BP, *SP ] }
+      - { name: Heal Check,               definition: d20 + HealModifier,              triggers: [ *BP, *SP ] }
+      - { name: Hide Check,               definition: d20 + HideModifier,              triggers: [ *BP, *SP ] }
+      - { name: Intimidate Check,         definition: d20 + IntimidateModifier,        triggers: [ *BP, *SP ] }
+      - { name: Jump Check,               definition: d20 + JumpModifier,              triggers: [ *BP, *SP ] }
+      - { name: Listen Check,             definition: d20 + ListenModifier,            triggers: [ *BP, *SP ] }
+      - { name: Move Silently Check,      definition: d20 + MoveSilentlyModifier,      triggers: [ *BP, *SP ] }
+      - { name: Perform Check,            definition: d20 + PerformModifier,           triggers: [ *BP, *SP ] }
+      - { name: Ride Check,               definition: d20 + RideModifier,              triggers: [ *BP, *SP ] }
+      - { name: Search Check,             definition: d20 + SearchModifier,            triggers: [ *BP, *SP ] }
+      - { name: Sense Motive Check,       definition: d20 + SenseMotiveModifier,       triggers: [ *BP, *SP ] }
+      - { name: Spot Check,               definition: d20 + SpotModifier,              triggers: [ *BP, *SP ] }
+      - { name: Survival Check,           definition: d20 + SurvivalModifier,          triggers: [ *BP, *SP ] }
+      - { name: Swim Check,               definition: d20 + SwimModifier,              triggers: [ *BP, *SP ] }
+      - { name: Use Rope Check,           definition: d20 + UseRopeModifier,           triggers: [ *BP, *SP ] }
+      

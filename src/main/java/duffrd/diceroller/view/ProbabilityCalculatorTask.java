@@ -49,7 +49,7 @@ public class ProbabilityCalculatorTask extends Task<Map<DataSet,XYChart.Series<S
         
         try
         {
-            eq = roller.probabilities ( recalculate );
+            eq = roller.calculateProbabilities ( recalculate );
         }
         catch ( ProbablityCalculationCancelledException e )
         {

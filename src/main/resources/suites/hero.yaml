@@ -1,0 +1,62 @@
+---
+suite: Hero System 4.0
+
+triggers:
+  &BP Brownie Point: A <= 4
+  &SP Sympathy Point: A == 18
+    
+groups:
+  - group: Basic Rolls
+    rollers:
+      - name: Hero 3D6
+        definition: 3d6
+        triggers: [ *BP, *SP ]
+        
+      - name: Location
+        definition: 3d6
+        triggers: [ *BP, *SP ]
+        labels:
+          3: Eyes
+          4: Face
+          5: Head
+          6: Hands
+          7: Arms
+          8: Arms
+          9: Shoulders
+          10: Chest
+          11: Core
+          12: Stomach
+          13: Vitals
+          14: Thighs
+          15: Legs
+          16: Legs
+          17: Feet
+          18: Feet
+
+  - group: Normal Attacks
+    rollers:
+      - { name: Damage Class 1,  definition:   d6 }
+      - { name: Damage Class 2,  definition:  2d6 }
+      - { name: Damage Class 3,  definition:  3d6 }
+      - { name: Damage Class 4,  definition:  4d6 }
+      - { name: Damage Class 5,  definition:  5d6 }
+      - { name: Damage Class 6,  definition:  6d6 }
+      - { name: Damage Class 7,  definition:  7d6 }
+      - { name: Damage Class 8,  definition:  8d6 }
+      - { name: Damage Class 9,  definition:  9d6 }
+      - { name: Damage Class 10, definition: 10d6 }
+
+  - group: Killing Attacks
+    rollers:
+      - { name: Damage Class 1,  definition:  d2 - 1  }
+      - { name: Damage Class 2,  definition:  d3      }
+      - { name: Damage Class 3,  definition:  d6      }
+      - { name: Damage Class 4,  definition:  d6 + 1  }
+      - { name: Damage Class 5,  definition:  d6 + d3 }
+      - { name: Damage Class 6,  definition: 2d6      }
+      - { name: Damage Class 7,  definition: 2d6 + 1  }
+      - { name: Damage Class 8,  definition: 2d6 + d3 }
+      - { name: Damage Class 9,  definition: 3d6      }
+      - { name: Damage Class 10, definition: 3d6 + 1  }
+
+      

@@ -1,0 +1,27 @@
+suite: S1
+
+variables:
+  - V0
+  - V1: 10
+  - V2: 20
+  - V3: 30
+  - V4: 40
+  - V5: 50
+  
+triggers:
+  T1: A == 1
+  T2: A == 2
+  
+groups:
+  - group: G1
+    rollers:
+      - { name: R1, definition: d4, labels: { 1: L1, 2: L2 }, triggers: [ T1, T2 ] }
+      - { name: R2, definition: d4 }
+      - { name: R3, definition: d4 }
+      - { name: R4, definition: d4 }
+      - { name: R5, definition: d4 }
+      - { name: R6, definition: d4 }
+      - { name: R7, definition: d4 }
+      
+  - group: G2
+  - group: G3

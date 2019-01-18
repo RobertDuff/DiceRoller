@@ -8,8 +8,9 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 import duffrd.diceroller.model.DiceRollerException;
+import duffrd.diceroller.model.Model;
 import duffrd.diceroller.model.Roller;
-import duffrd.diceroller.model.RollerModel;
+import duffrd.diceroller.model.Suite;
 import duffrd.diceroller.model.Variable;
 import javafx.application.HostServices;
 import javafx.application.Platform;
@@ -26,6 +27,7 @@ import javafx.scene.control.Accordion;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
@@ -73,17 +75,27 @@ public class MainWindowController implements Initializable
     public MenuItem deleteGroupItem;
     
     @FXML
+    public MenuItem switchSuiteMenuItem;
+    
+    @FXML
+    public MenuItem newSuiteMenuItem;
+    
+    @FXML
+    public MenuItem deleteSuiteMenuItem;
+    
+    @FXML
     public MenuItem helpItem;
     
     @FXML
     public MenuItem aboutItem;
 	
     private HostServices hostServices;
-	private RollerModel model;
+	private Model model;
 	
+	private ObjectProperty<Suite> suiteProperty = new SimpleObjectProperty<> ();
 	private ObjectProperty<Roller> rollerProperty = new SimpleObjectProperty<> ();
 
-	public MainWindowController ( HostServices hostServices, RollerModel model )
+	public MainWindowController ( HostServices hostServices, Model model )
 	{
 	    this.hostServices = hostServices;
 	    this.model = model;
@@ -92,6 +104,9 @@ public class MainWindowController implements Initializable
 	@Override
 	public void initialize ( URL location, ResourceBundle resources )
 	{	    
+	    suiteProperty.addListener ( ( prop, oldValue, newValue ) -> setSuite() );
+	    
+	    switchSuiteMenuItem.setOnAction ( event -> chooseSuite() );
         newRollerItem.setOnAction ( event -> newRoller ( chooser.getExpandedPane () ) );
         newRollerItem.disableProperty ().bind ( Bindings.isNull ( chooser.expandedPaneProperty () ) );
         
@@ -115,19 +130,15 @@ public class MainWindowController implements Initializable
 			AnchorPane outcomePane = outcomeLoader.load();
 			final OutcomePaneController outcomePaneController = outcomeLoader.getController ();
 
+			HistoryPaneController historyController = new HistoryPaneController ( model.historyProperty () );
 			FXMLLoader historyLoader = new FXMLLoader ( getClass().getResource ( "HistoryPane.fxml" ) );
+			historyLoader.setController ( historyController );
 			AnchorPane historyPane = historyLoader.load ();
 
 			detailPane.getItems ().addAll ( outcomePane, historyPane );
 			detailPane.setDividerPosition ( 0, 0.3 );
 
-			rollerProperty.addListener ( ( p, o, n ) ->
-			{
-			    if ( n == null )
-			        outcomePaneController.setProperties ( null, null );
-			    else
-			        outcomePaneController.setProperties ( n.outcomeProperty (), n.triggersProperty () );
-			} );
+			rollerProperty.addListener ( ( p, o, n ) -> outcomePaneController.bind ( n ) );
 			
 			for ( String groupName : model.groupNames () )
                 chooser.getPanes ().add ( createGroupPane ( groupName ) );
@@ -156,6 +167,21 @@ public class MainWindowController implements Initializable
 		} );
 	}
 
+	private void chooseSuite()
+	{
+	    ChoiceDialog<Suite> dialog = new ChoiceDialog<Suite> ( null, model.suites () );
+	    
+	    Optional<Suite> suite = dialog.showAndWait ();
+	    
+	    if ( suite.isPresent () )
+	        suiteProperty.set ( suite.get () );
+	}
+	
+	private void setSuite()
+	{
+	    
+	}
+	
 	private void newRoller ( TitledPane groupPane )
     {        
 	    if ( groupPane == null )

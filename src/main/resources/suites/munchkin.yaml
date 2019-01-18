@@ -1,0 +1,35 @@
+---
+suite: Munchkin
+
+groups:
+  - group: Escape Rolls
+    rollers:
+      - name: Minus 1
+        definition: d6 - 1 >= 5
+        labels:
+          0: Bad Stuff
+          1: Escape
+
+      - name: Plus Zero
+        definition: d6 >= 5
+        labels:
+          0: Bad Stuff
+          1: Escape
+
+      - name: Plus 1
+        definition: d6 + 1 >= 5
+        labels:
+          0: Bad Stuff
+          1: Escape
+
+      - name: Plus 2
+        definition: d6 + 2 >= 5
+        labels:
+          0: Bad Stuff
+          1: Escape
+
+      - name: Plus 3
+        definition: d6 + 3 >= 5
+        labels:
+          0: Bad Stuff
+          1: Escape

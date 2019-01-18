@@ -11,10 +11,20 @@
   		<artifactId>utility</artifactId>
   		<version>1.0</version>
   	</dependency>
+  	<dependency>
+  		<groupId>org.yaml</groupId>
+  		<artifactId>snakeyaml</artifactId>
+  		<version>1.23</version>
+  	</dependency>
     <dependency>
     	<groupId>org.xerial</groupId>
     	<artifactId>sqlite-jdbc</artifactId>
     	<version>3.25.2</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.fxmisc.easybind</groupId>
+    	<artifactId>easybind</artifactId>
+    	<version>1.0.3</version>
     </dependency>
   </dependencies>
 </project>
