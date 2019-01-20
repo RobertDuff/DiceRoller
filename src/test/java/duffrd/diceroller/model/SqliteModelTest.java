@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -28,6 +27,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import duffrd.diceroller.model.sqlite.SqliteDbProvider;
 import duffrd.diceroller.model.sqlite.SqliteModelLoader;
+import javafx.collections.FXCollections;
 import utility.arrays.ListRearranger;
 import utility.sql.Sql;
 
@@ -51,9 +51,14 @@ public class SqliteModelTest
         model = loader.load ();
         
         Map<String,Object> suiteSpec = new Yaml ().load ( ClassLoader.getSystemResourceAsStream ( TEST_DATA ) );
-        SuiteInitializer.createSuite ( model, suiteSpec );  
         
-        suite = model.suites().iterator ().next ();
+        suite = model.newSuite ();
+        suite.name ( suiteSpec.get ( "suite" ).toString () );
+        
+        SuiteInitializer suiteInitializer = new SuiteInitializer ();
+        suiteInitializer.apply ( suite, suiteSpec );  
+        
+        model.suites ().add ( suite );
     }
     
     @After
@@ -397,7 +402,7 @@ public class SqliteModelTest
     @Test
     public void testCreateSuite() throws SQLException
     {
-        Suite suite = model.addNewSuite ();
+        Suite suite = model.newSuite ();
         
         assertNotNull ( suite.lua () );
         
@@ -450,7 +455,7 @@ public class SqliteModelTest
     @Test
     public void testCreateVariable() throws SQLException
     {
-        Variable v = suite.addNewVariable ();
+        Variable v = suite.newVariable ();
         
         assertNotNull ( v.lua () );
         
@@ -510,7 +515,7 @@ public class SqliteModelTest
     @Test
     public void testRearrangeVariables() throws SQLException
     {
-        suite.variables ().sort ( ListRearranger.reverse ( suite.variables () ) );
+        FXCollections.sort ( suite.variablesProperty().getValue (), ListRearranger.reverse ( suite.variables () ) );
         
         int n = 5;
         int s = 1;
@@ -552,7 +557,7 @@ public class SqliteModelTest
     @Test
     public void testCreateTrigger() throws SQLException
     {
-        Trigger trigger = suite.addNewTrigger ();
+        Trigger trigger = suite.newTrigger ();
         
         trigger.name ( "T3" );
         
@@ -662,7 +667,7 @@ public class SqliteModelTest
     @Test
     public void testCreateGroup() throws SQLException
     {
-        Group group = suite.addNewGroup ();
+        Group group = suite.newGroup ();
         
         assertNotNull ( group.lua () );
         
@@ -704,7 +709,7 @@ public class SqliteModelTest
     @Test
     public void testRearrangeGroups() throws SQLException
     {
-        suite.groups ().sort ( ListRearranger.reverse ( suite.groups () ) );
+        FXCollections.sort ( suite.groupsProperty ().getValue (), ListRearranger.reverse ( suite.groups () ) );
         
         int n = 3;
         int s = 1;
@@ -753,7 +758,7 @@ public class SqliteModelTest
     @Test
     public void testCreateRoller() throws SQLException
     {
-        Roller roller = suite.groups ().get ( 1 ).addNewRoller ();
+        Roller roller = suite.groups ().get ( 1 ).newRoller ();
         
         assertNotNull ( roller.lua () );
         
@@ -813,7 +818,7 @@ public class SqliteModelTest
     @Test
     public void testRearrangeRollers() throws SQLException
     {
-        suite.groups ().get ( 0 ).rollers ().sort ( ListRearranger.reverse ( suite.groups ().get ( 0 ).rollers() ) );
+        FXCollections.sort ( suite.groups ().get ( 0 ).rollersProperty().getValue (), ListRearranger.reverse ( suite.groups ().get ( 0 ).rollers() ) );
         
         int n = 7;
         int s = 1;

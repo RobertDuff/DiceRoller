@@ -6,21 +6,23 @@ import java.util.Set;
 
 import org.luaj.vm2.Globals;
 
+import javafx.beans.property.ListProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SetProperty;
+import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleSetProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 
 public abstract class Suite
 {
     protected ObjectProperty<Globals> luaProperty = new SimpleObjectProperty<> ();
     protected StringProperty nameProperty = new SimpleStringProperty ();
-    protected ObservableList<Variable> variablesProperty = FXCollections.observableArrayList ();
-    protected ObservableSet<Trigger> triggersProperty = FXCollections.observableSet ( new HashSet<>() );
-    protected ObservableList<Group> groupsProperty = FXCollections.observableArrayList ();
+    protected ListProperty<Variable> variablesProperty = new SimpleListProperty<> ( FXCollections.observableArrayList () );
+    protected SetProperty<Trigger> triggersProperty = new SimpleSetProperty<> ( FXCollections.observableSet ( new HashSet<>() ) );
+    protected ListProperty<Group> groupsProperty = new SimpleListProperty<> ( FXCollections.observableArrayList () );
     
     public Globals lua()
     {
@@ -64,22 +66,28 @@ public abstract class Suite
         return nameProperty;
     }
     
-    public ObservableList<Variable> variablesProperty()
+    public ListProperty<Variable> variablesProperty()
     {
         return variablesProperty;
     }
     
-    public ObservableSet<Trigger> triggersProperty()
+    public SetProperty<Trigger> triggersProperty()
     {
         return triggersProperty;
     }
     
-    public ObservableList<Group> groupsProperty()
+    public ListProperty<Group> groupsProperty()
     {
         return groupsProperty;
     }
     
-    public abstract Variable addNewVariable();
-    public abstract Trigger addNewTrigger();
-    public abstract Group addNewGroup();
+    public abstract Variable newVariable();
+    public abstract Trigger newTrigger();
+    public abstract Group newGroup();
+
+    @Override
+    public String toString ()
+    {
+        return name();
+    }
 }

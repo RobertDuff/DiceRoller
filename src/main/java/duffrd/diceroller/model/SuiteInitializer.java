@@ -26,25 +26,35 @@ public class SuiteInitializer
 
     private Map<String,Map<String,Object>> templates;
 
-    public SuiteInitializer () throws IOException, URISyntaxException
+    public SuiteInitializer ()
     {
         templates = new HashMap<> ();
 
-        Files.walk ( Paths.get ( ClassLoader.getSystemResource ( SUITES_DIRECTORY ).toURI () ) )
-        .filter ( suitePath -> suitePath.getFileName ().toString ().endsWith ( ".yaml" ) )
-        .forEach ( suitePath -> 
+        try
         {
-            try
+
+            Files.walk ( Paths.get ( ClassLoader.getSystemResource ( SUITES_DIRECTORY ).toURI () ) )
+            .filter ( suitePath -> suitePath.getFileName ().toString ().endsWith ( ".yaml" ) )
+            .forEach ( suitePath -> 
             {
-                Map<String,Object> suiteSpec = new Yaml ().load ( Files.newInputStream ( suitePath, StandardOpenOption.READ ) );
-                String suiteName = ( String ) suiteSpec.remove ( "suite" );
-                templates.put ( suiteName, suiteSpec );
-            }
-            catch ( IOException e )
-            {
-                e.printStackTrace();
-            }
-        } );
+                try
+                {
+                    Map<String,Object> suiteSpec = new Yaml ().load ( Files.newInputStream ( suitePath, StandardOpenOption.READ ) );
+                    String suiteName = ( String ) suiteSpec.remove ( "suite" );
+                    templates.put ( suiteName, suiteSpec );
+                }
+                catch ( IOException e )
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            } );
+        }
+        catch ( IOException | URISyntaxException e )
+        {
+            e.printStackTrace();
+            templates.clear ();
+        }
     }
 
     public List<String> suiteTemplates()
@@ -54,28 +64,21 @@ public class SuiteInitializer
         return suiteNames;
     }
 
-    public void createSuite ( Model model, String suiteName, String templateName )
+    public void apply ( Suite suite, String templateName )
     {
-        Map<String,Object> spec = new HashMap<> ( templates.get ( templateName ) );
-        spec.put ( "suite", suiteName );
-        
-        createSuite ( model, spec );
+        apply ( suite, templates.get ( templateName ) );
     }
     
     @SuppressWarnings ( "unchecked" )
-    public static void createSuite ( Model model, Map<String,Object> spec )
+    public void apply ( Suite suite, Map<String,Object> spec )
     {
-        Suite suite = model.addNewSuite ();
-
-        suite.name ( ( String ) spec.get ( "suite" ) );
-
         //
         // Variables
         //
 
         for ( Object o : ( List<Object> ) spec.getOrDefault ( "variables", Collections.emptyList () ) )
         {
-            Variable variable = suite.addNewVariable ();
+            Variable variable = suite.newVariable ();
 
             if ( o instanceof String )
             {
@@ -105,12 +108,13 @@ public class SuiteInitializer
         
         for ( String name : triggers.keySet () )
         {
-            Trigger trigger = suite.addNewTrigger ();
+            Trigger trigger = suite.newTrigger ();
 
             trigger.name ( name );
             trigger.definition ( triggers.get ( name ) );
             
             logger.debug ( "Adding Trigger " + name );
+            
             suite.triggersProperty ().add ( trigger );
         }
         
@@ -122,14 +126,14 @@ public class SuiteInitializer
 
         for ( Map<String,Object> g : ( List<Map<String,Object>> ) spec.getOrDefault ( "groups", Collections.emptyList () ) )
         {
-            Group group = suite.addNewGroup ();
+            Group group = suite.newGroup ();
 
             group.name ( ( String ) g.get ( "group" ) );
             logger.debug ( "Assigning new Group Name: " + group.name () );
             
             for ( Map<String,Object> r : ( List<Map<String, Object>> ) g.getOrDefault ( "rollers", Collections.emptyList () ) )
             {
-                Roller roller = group.addNewRoller ();
+                Roller roller = group.newRoller ();
 
                 roller.name ( ( String ) r.get ( "name" ) );
                 roller.definition ( ( String ) r.get ( "definition" ) );
@@ -156,7 +160,5 @@ public class SuiteInitializer
             
             suite.groupsProperty ().add ( group );
         }
-        
-        model.suitesProperty ().add ( suite );
     }
 }

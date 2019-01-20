@@ -111,7 +111,7 @@ public class DiceRollerApplication extends Application
 			mainStage = new Stage ( StageStyle.DECORATED );
 
 			FXMLLoader mainWindowLoader = new FXMLLoader ( getClass().getResource ( "MainWindow.fxml" ) );
-			mainWindowLoader.setController ( new MainWindowController ( getHostServices (), model ) );
+			mainWindowLoader.setController ( new MainWindowController ( getHostServices (), mainStage.titleProperty (), model ) );
 			Pane mainWindowPane = mainWindowLoader.load();
 			
 			Scene mainScene = new Scene ( mainWindowPane );

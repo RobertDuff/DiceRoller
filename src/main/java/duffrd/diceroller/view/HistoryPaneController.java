@@ -1,14 +1,17 @@
 package duffrd.diceroller.view;
 
 import java.net.URL;
-import java.util.Date;
+import java.text.DateFormat;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
 
 import duffrd.diceroller.model.Outcome;
 import javafx.application.Platform;
+import javafx.beans.property.ListProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.collections.ObservableList;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
@@ -24,15 +27,17 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.MouseButton;
 
-public class HistoryPaneController implements Initializable
+public class HistoryPaneController implements Initializable, RollListener
 {
+    private static final DateFormat DATE_FORMAT = DateFormat.getTimeInstance ( DateFormat.MEDIUM );
+    
 	private ObjectProperty<Predicate<? super Outcome>> filterProperty;
 	
 	@FXML
 	public TableView<Outcome> historyTable;
 	
 	@FXML
-	public TableColumn<Outcome,Date> historyTableTimeColumn;
+	public TableColumn<Outcome,String> historyTableTimeColumn;
 	
 	@FXML
 	public TableColumn<Outcome,String> historyTableRollerNameColumn;
@@ -46,16 +51,17 @@ public class HistoryPaneController implements Initializable
 	@FXML
 	public TableColumn<Outcome,String> historyTableFacesColumn;
 	
-	private ObservableList<Outcome> history;
-	
-	public HistoryPaneController ( ObservableList<Outcome> history )
-    {
-        this.history = history;
-    }
+	private ListProperty<Outcome> history = new SimpleListProperty<> ( FXCollections.observableArrayList () );
 	
 	@Override
+    public void roll ( Outcome outcome )
+    {
+        history.add ( outcome );
+    }
+    
+	@Override
 	public void initialize ( URL location, ResourceBundle resources )
-	{
+	{	    
 		FilteredList<Outcome> filteredList = new FilteredList<> ( history );
 		filterProperty = filteredList.predicateProperty ();
 		
@@ -84,7 +90,10 @@ public class HistoryPaneController implements Initializable
 		//
 		//
 		
-		historyTableTimeColumn.setCellValueFactory ( new PropertyValueFactory<> ( "time" ) );
+		historyTableTimeColumn.setCellValueFactory ( cb -> 
+		{
+		    return new SimpleStringProperty ( DATE_FORMAT.format ( cb.getValue ().time () ) );
+		} );
 		
 		historyTable.getSortOrder ().add ( historyTableTimeColumn );
 		historyTableTimeColumn.setSortType ( SortType.DESCENDING );

@@ -36,19 +36,19 @@ public class SqliteSuite extends Suite
     }
     
     @Override
-    public Variable addNewVariable ()
+    public Variable newVariable ()
     {
         return new SqliteVariable ().animate ( db, id ).lua ( lua () );
     }
 
     @Override
-    public Trigger addNewTrigger ()
+    public Trigger newTrigger ()
     {
         return new SqliteTrigger ().animate ( db, id ).lua ( lua () );
     }
 
     @Override
-    public Group addNewGroup ()
+    public Group newGroup ()
     {
         return new SqliteGroup().animate ( db, id ).lua ( lua () );
     }

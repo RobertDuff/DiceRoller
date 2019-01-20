@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,11 +35,23 @@ public class SqliteGroup extends Group
     }
     
     @Override
-    public Roller addNewRoller ()
+    public Roller newRoller ()
     {
         return new SqliteRoller().animate ( db, suiteId, id ).lua ( luaProperty ().get () );
     }
     
+    @Override
+    public void addRoller ( Roller src )
+    {
+        Roller roller = newRoller ();
+
+        roller.name ( src.name () );
+        roller.definition ( src.definition () );
+        roller.labels ().putAll ( src.labels ().entrySet ().stream ().filter ( entry -> entry.getValue () == null || !entry.getValue ().isEmpty () ).collect ( Collectors.toMap ( Map.Entry::getKey, Map.Entry::getValue ) ) );
+        
+        roller.triggers ().addAll ( src.triggers () );
+    }
+
     SqliteGroup animate ( Connection conn, int suiteId )
     {
         logger.debug ( "Animating Group" );
@@ -114,6 +127,13 @@ public class SqliteGroup extends Group
                     {
                         // Should never happen
                         logger.error ( "DB: Roller Replacement Should Not Happen" );
+                        logger.error ( "DB:     Range:   " + change.getFrom () + ".." + change.getTo () );
+                        
+                        for ( Roller roller : change.getRemoved () )
+                            logger.error ( "DB:    Removed " + roller );
+                        
+                        for ( Roller roller : change.getAddedSubList () )
+                            logger.error ( "DB:    Added " + roller );
                     }
                     else if ( change.wasAdded () )
                     {
@@ -129,7 +149,7 @@ public class SqliteGroup extends Group
                     }
                 }
             }
-            catch ( SQLException e )
+            catch ( Throwable e )
             {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

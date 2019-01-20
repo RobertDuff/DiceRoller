@@ -9,16 +9,14 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 
 public class Outcome
 {
     private ObjectProperty<Date> timeProperty = new SimpleObjectProperty<> ();
     private StringProperty rollerNameProperty =  new SimpleStringProperty ();
     private StringProperty outcomeProperty = new SimpleStringProperty ();
-    private ObservableList<String> triggersProperty = FXCollections.observableArrayList ();
-    private ObservableList<List<Integer>> facesProperty = FXCollections.observableArrayList ();
+    private StringProperty triggersProperty = new SimpleStringProperty ( "" );
+    private StringProperty facesProperty = new SimpleStringProperty ( "" );
 
     public Outcome ()
     {
@@ -54,25 +52,29 @@ public class Outcome
     
     public String triggers()
     {
-        return triggersProperty.stream ().collect ( Collectors.joining ( ", " ) );
+        return triggersProperty.get ();
     }
     
     public Outcome addTrigger ( Trigger trigger )
     {
-        triggersProperty.add ( trigger.name () );
+        if ( !triggersProperty.get ().isEmpty () )
+            triggersProperty.set ( triggersProperty.get () + ", " );
+        
+        triggersProperty.set ( triggersProperty.get () + trigger.name () );
         return this;
     }
     
     public String faces()
     {
-        return facesProperty.stream ().map ( l -> 
-            l.stream ().map ( i -> String.valueOf ( i ) ).collect ( Collectors.joining ( " ", "[ ", " ]" ) )
-                ).collect ( Collectors.joining ( " " ) );
+        return facesProperty.get ();
     }
     
-    public Outcome addFaces ( List<Integer > faces )
+    public Outcome addFaces ( List<Integer> faces )
     {
-        facesProperty.add ( faces );
+        if ( !facesProperty.get ().isEmpty () )
+            facesProperty.set ( facesProperty.get () + " " );
+        
+        facesProperty.set ( facesProperty.get () + faces.stream ().map ( i -> String.valueOf ( i ) ).collect ( Collectors.joining ( " ", "[ ", " ]" ) ) );
         return this;
     }
     
@@ -91,12 +93,12 @@ public class Outcome
         return outcomeProperty;
     }
     
-    public ObservableList<String> triggerProperty()
+    public StringProperty triggersProperty()
     {
         return triggersProperty;
     }
     
-    public ObservableList<List<Integer>> facesProperty()
+    public StringProperty facesProperty()
     {
         return facesProperty;
     }
@@ -105,5 +107,11 @@ public class Outcome
     public boolean equals ( Object obj )
     {
         return this == obj;
+    }
+
+    @Override
+    public String toString ()
+    {
+        return "Outcome [ " + roller() + " " + outcome() + " " + triggers() + " " + faces() + "]";
     }
 }

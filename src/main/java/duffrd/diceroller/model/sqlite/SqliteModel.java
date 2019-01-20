@@ -20,7 +20,7 @@ public class SqliteModel extends Model
     protected Connection db = null;
     
     @Override
-    public Suite addNewSuite ()
+    public Suite newSuite ()
     {
         return new SqliteSuite().animate ( db ).lua ( LuaProvider.newLua () );
     }

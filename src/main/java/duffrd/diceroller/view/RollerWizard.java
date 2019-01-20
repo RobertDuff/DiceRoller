@@ -1,12 +1,12 @@
 package duffrd.diceroller.view;
 
-import duffrd.diceroller.model.DiceRollerException;
 import duffrd.diceroller.model.ProbablityCalculationCancelledException;
 import duffrd.diceroller.model.Roller;
-import duffrd.diceroller.model.RollerBuilder;
+import duffrd.diceroller.model.Suite;
+import duffrd.diceroller.model.Trigger;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.binding.BooleanBinding;
+import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Button;
@@ -14,14 +14,15 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
-import javafx.util.converter.DefaultStringConverter;
 
 public class RollerWizard extends Dialog<ButtonType>
 {
@@ -47,7 +48,7 @@ public class RollerWizard extends Dialog<ButtonType>
             AnchorPane.setLeftAnchor ( definitionLabel, 30.0 );
             
             TextField nameField = new TextField();
-            builder.nameProperty().bind ( nameField.textProperty () );
+            roller.nameProperty ().bind ( nameField.textProperty () );
             nameField.requestFocus ();
             AnchorPane.setTopAnchor ( nameField, 30.0 );
             AnchorPane.setLeftAnchor ( nameField, 150.0 );
@@ -55,37 +56,26 @@ public class RollerWizard extends Dialog<ButtonType>
             
             TextField definitionField = new TextField();
          
-            builder.definitionProperty().bind ( definitionField.textProperty () );
+            roller.definitionProperty().bind ( definitionField.textProperty () );
             AnchorPane.setTopAnchor ( definitionField, 70.0 );
             AnchorPane.setLeftAnchor ( definitionField, 150.0 );
             AnchorPane.setRightAnchor ( definitionField, 30.0 );
             
-            BooleanProperty validProperty = new SimpleBooleanProperty ();
-            validProperty.bind ( Bindings.createBooleanBinding ( () -> builder.isDefinitionValid ( definitionField.textProperty ().get() ), definitionField.textProperty () ) );
-
-            validProperty.addListener ( ( a, o, n ) -> 
-            {
-                if ( n )
-                    definitionField.setStyle ( "-fx-control-inner-background: white" );
-                else
-                    definitionField.setStyle ( "-fx-control-inner-background: pink" );
-            } );
+            definitionField.styleProperty ().bind ( Bindings.when ( roller.validProperty () ).then ( "" ).otherwise ( "-fx-control-inner-background: pink" ) );
             
-            BooleanProperty completeProperty = new SimpleBooleanProperty ();
-            completeProperty.bind ( validProperty.not ().or ( Bindings.equal ( builder.nameProperty(), "" ) ).or ( Bindings.equal ( builder.definitionProperty(), "" ) ) );
+            BooleanBinding completeBinding = Bindings.createBooleanBinding ( () -> !roller.isValid () || roller.name ().isEmpty (), 
+                    roller.validProperty(), roller.nameProperty(), roller.definitionProperty() );
             
             Button nextButton = ( Button ) lookupButton ( ButtonType.NEXT );
-            nextButton.disableProperty ().bind ( completeProperty );
+            nextButton.disableProperty ().bind ( completeBinding );
             
             Button finishButton = ( Button ) lookupButton ( ButtonType.FINISH );
-            finishButton.disableProperty ().bind ( completeProperty );
+            finishButton.disableProperty ().bind ( completeBinding );
             
             pane.getChildren ().addAll ( nameLabel, definitionLabel, nameField, definitionField );
             
             setContent ( pane );
         }
-        
-        
     }
     
     protected class LabelsPane extends DialogPane
@@ -155,7 +145,7 @@ public class RollerWizard extends Dialog<ButtonType>
             labelColumn.setCellFactory ( TextFieldTableCell.forTableColumn() );
             labelColumn.setOnEditCommit ( event -> 
             {
-                builder.labelMap ().put ( event.getRowValue ().outcome, event.getNewValue () );
+                roller.labels().put ( event.getRowValue ().outcome, event.getNewValue () );
             });
 
             labelTable.getColumns ().add ( outcomeColumn );
@@ -170,7 +160,7 @@ public class RollerWizard extends Dialog<ButtonType>
             
             setContent ( pane );
 
-            builder.labelMap ().addListener ( ( MapChangeListener<Integer,String> ) change ->
+            roller.labelsProperty().addListener ( ( MapChangeListener<Integer,String> ) change ->
             {
                 boolean removed = change.wasRemoved ();
                 boolean added = change.wasAdded ();
@@ -193,163 +183,77 @@ public class RollerWizard extends Dialog<ButtonType>
     }
     
     protected class TriggersPane extends DialogPane
-    {        
-        protected class Entry
-        {
-            public String triggerName;
-            public String definition;
-            
-            public Entry ( String name, String definition )
-            {
-                this.triggerName = name;
-                this.definition = definition;
-            }
-
-            @Override
-            public int hashCode ()
-            {
-                final int prime = 31;
-                int result = 1;
-                result = prime * result + getOuterType ().hashCode ();
-                result = prime * result + ( ( triggerName == null )? 0 : triggerName.hashCode () );
-                return result;
-            }
-
-            @Override
-            public boolean equals ( Object obj )
-            {
-                if ( this == obj ) return true;
-                if ( obj == null ) return false;
-                if ( getClass () != obj.getClass () ) return false;
-                Entry other = ( Entry ) obj;
-                if ( !getOuterType ().equals ( other.getOuterType () ) ) return false;
-                if ( triggerName == null )
-                {
-                    if ( other.triggerName != null ) return false;
-                }
-                else if ( !triggerName.equals ( other.triggerName ) ) return false;
-                return true;
-            }
-
-            private TriggersPane getOuterType ()
-            {
-                return TriggersPane.this;
-            }
-        }
-        
+    {                
         TriggersPane()
         {            
             setHeaderText ( "Create Triggers" );
             getButtonTypes ().addAll ( ButtonType.PREVIOUS, ButtonType.CANCEL, ButtonType.FINISH );
 
             AnchorPane pane = new AnchorPane();
-            VBox vbox = new VBox();
-            AnchorPane.setLeftAnchor ( vbox, 30.0 );
-            AnchorPane.setRightAnchor ( vbox, 30.0 );
-            AnchorPane.setTopAnchor ( vbox, 30.0 );
-            AnchorPane.setBottomAnchor ( vbox, 30.0 );
             
-            pane.getChildren ().add ( vbox );
+            ListView<Trigger> triggerList = new ListView<>();
             
-            Button newTriggerButton = new Button();
-            newTriggerButton.setText ( "Create New Trigger" );
-            
-            TableView<Entry> triggerTable = new TableView<>();     
-            triggerTable.setEditable ( true );
-
-            newTriggerButton.setOnAction ( event -> builder.triggerMap ().put ( "New Trigger", "" ) );
-            
-            TableColumn<Entry,String> triggerNameColumn = new TableColumn<>();
-            triggerNameColumn.setText ( "Trigger Name" );
-            triggerNameColumn.setPrefWidth ( 120 );
-            triggerNameColumn.setCellValueFactory ( cd -> Bindings.createStringBinding ( () -> cd.getValue ().triggerName ) );
-            triggerNameColumn.setCellFactory ( TextFieldTableCell.forTableColumn() );
-            triggerNameColumn.setOnEditCommit ( event -> 
+            triggerList.setCellFactory ( cb -> 
             {
-                builder.triggerMap ().put ( event.getNewValue (), "" );
-                builder.triggerMap ().remove ( event.getOldValue () );
-            });
-            
-            TableColumn<Entry,String> definitionColumn = new TableColumn<>();
-            definitionColumn.setText ( "Definition" );
-            definitionColumn.setPrefWidth ( 200 );
-            definitionColumn.setCellValueFactory ( cd -> Bindings.createStringBinding ( () -> cd.getValue ().definition ) );
-            definitionColumn.setCellFactory ( cb ->
-            {
-              return new TextFieldTableCell<Entry,String>( new DefaultStringConverter () )
+              return new ListCell<Trigger> ()
               {
+
                 @Override
-                public void updateItem ( String item, boolean empty )
+                protected void updateItem ( Trigger trigger, boolean empty )
                 {
-                    super.updateItem ( item, empty );
+                    super.updateItem ( trigger, empty );
                     
-                    if ( empty || item == null )
+                    if ( empty )
                     {
                         setText ( null );
+                        setGraphic ( null );
+                        return;
                     }
-                    else
-                    {
-                        setText ( item );
-                        
-                        if ( builder.isDefinitionValid ( item ) )
-                        {
-                            System.out.println ( "Valid: " + this.getStyle () );
-                            this.setStyle ( "" );
-                        }
-                        else
-                        {
-                            System.out.println ( "Invalid" );
-                            this.setStyle ( "-fx-background-color: pink" );                        
-                        }
-                    }
-                }                  
-              };  
+                    
+                    setText ( trigger.name () );
+                }
+                  
+              };
             } );
             
-            definitionColumn.setOnEditCommit ( event -> 
-            {
-                builder.triggerMap ().put ( event.getRowValue ().triggerName, event.getNewValue () );
-            } );
+            AnchorPane.setLeftAnchor ( triggerList, 30.0 );
+            AnchorPane.setRightAnchor ( triggerList, 30.0 );
+            AnchorPane.setTopAnchor ( triggerList, 30.0 );
+            AnchorPane.setBottomAnchor ( triggerList, 30.0 );
+            
+            pane.getChildren ().add ( triggerList );
 
-            triggerTable.getColumns ().add ( triggerNameColumn );
-            triggerTable.getColumns ().add ( definitionColumn );
+            triggerList.getItems ().addAll ( suite.triggers () );
+            triggerList.getSelectionModel ().setSelectionMode ( SelectionMode.MULTIPLE );
             
-            vbox.getChildren ().addAll ( newTriggerButton, triggerTable );
+            triggerList.getSelectionModel ().getSelectedItems ().addListener ( ( ListChangeListener.Change<? extends Trigger> change ) -> 
+            {
+                while ( change.next () )
+                {
+                    if ( change.wasRemoved () )
+                        roller.triggers ().removeAll ( change.getRemoved () );
+                    
+                    if ( change.wasAdded () )
+                        roller.triggers ().addAll ( change.getAddedSubList () );
+                }
+            } );
             
             setContent ( pane );
-
-            builder.triggerMap ().addListener ( ( MapChangeListener<String,String> ) change ->
-            {
-                boolean removed = change.wasRemoved ();
-                boolean added = change.wasAdded ();
-
-                if ( removed && added )
-                {
-                    Entry entry = new Entry ( change.getKey (), change.getValueAdded () );
-                    triggerTable.getItems ().set ( triggerTable.getItems ().indexOf ( entry ), entry );
-                }
-                else if ( added )
-                {
-                    triggerTable.getItems ().add ( new Entry ( change.getKey (), change.getValueAdded () ) );
-                }
-                else if ( removed )
-                {
-                    triggerTable.getItems ().remove ( new Entry ( change.getKey (), change.getValueRemoved () ) );
-                }
-            } );
         }
     }
 
-    RollerBuilder builder;
+    private Suite suite;
+    private Roller roller;
     private DefinitionPane definitionPane;
     private LabelsPane labelsPane;
     private TriggersPane triggersPane;
     
-    public RollerWizard ( String group )
+    public RollerWizard ( Suite suite )
     {
         setTitle ( "Create New Roller" );
         
-        builder = new RollerBuilder ( group );
+        this.suite = suite;
+        roller = new Roller().lua ( suite.lua () );
         
         definitionPane = new DefinitionPane();
         labelsPane = new LabelsPane();
@@ -366,18 +270,19 @@ public class RollerWizard extends Dialog<ButtonType>
             
             try
             {
-                probabilities = builder.build ().calculateProbabilities ();
+                roller.calculateProbabilities ();
+                probabilities = roller.rawProbabilities ();
             }
-            catch ( ProbablityCalculationCancelledException | DiceRollerException e )
+            catch ( ProbablityCalculationCancelledException e )
             {
                 e.printStackTrace();
             }
             
-            builder.labelMap ().clear ();
+            roller.labels ().clear ();
             
             for ( int outcome = 0; outcome < probabilities.length; outcome ++ )
                 if ( probabilities[ outcome ] > 0 )
-                    builder.labelMap ().put ( outcome, "" );
+                    roller.labels().put ( outcome, "" );
         } );
         
         labelsPane.lookupButton ( ButtonType.PREVIOUS ).addEventFilter ( ActionEvent.ACTION, event -> 
@@ -385,7 +290,7 @@ public class RollerWizard extends Dialog<ButtonType>
             event.consume (); 
             dialogPaneProperty ().set ( definitionPane );
             
-            builder.labelMap ().clear ();
+            roller.labels().clear ();
         } );
         
         labelsPane.lookupButton ( ButtonType.NEXT ).addEventFilter ( ActionEvent.ACTION, event -> { event.consume (); dialogPaneProperty ().set ( triggersPane ); } );
@@ -402,14 +307,6 @@ public class RollerWizard extends Dialog<ButtonType>
     
     public Roller roller()
     {
-        try
-        {
-            return builder.build ();
-        }
-        catch ( DiceRollerException e )
-        {
-            e.printStackTrace();
-            return null;
-        }
+        return roller;
     }
 }

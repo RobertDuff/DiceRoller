@@ -28,6 +28,7 @@
                         <MenuItem fx:id="deleteGroupItem" mnemonicParsing="false" text="Delete Group" />
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem fx:id="newSuiteMenuItem" mnemonicParsing="false" text="New Suite" />
+                        <MenuItem fx:id="renameSuiteMenuItem" mnemonicParsing="false" text="Rename Suite" />
                         <MenuItem fx:id="deleteSuiteMenuItem" mnemonicParsing="false" text="Delete Suite" />
                   </items>
                 </Menu>

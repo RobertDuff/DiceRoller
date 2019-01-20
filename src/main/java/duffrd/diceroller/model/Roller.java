@@ -23,18 +23,21 @@ import org.luaj.vm2.Varargs;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.MapProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.SetProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleMapProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleSetProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
 import utility.lua.Function;
 import utility.lua.VarargsBuilder;
 
@@ -50,10 +53,10 @@ public class Roller
     private ObjectProperty<Function> functionProperty = new SimpleObjectProperty<> ();
     private BooleanProperty validProperty = new SimpleBooleanProperty ();
 
-    private ObservableList<Dice> diceProperty = FXCollections.observableArrayList ();
+    private ListProperty<Dice> diceProperty = new SimpleListProperty<> ( FXCollections.observableArrayList () );
 
-    protected ObservableSet<Trigger> triggersProperty = FXCollections.observableSet ( new HashSet<>() );
-    protected ObservableMap<Integer,String> labelsProperty = FXCollections.observableHashMap ();
+    protected SetProperty<Trigger> triggersProperty = new SimpleSetProperty<> ( FXCollections.observableSet ( new HashSet<>() ) );
+    protected MapProperty<Integer,String> labelsProperty = new SimpleMapProperty<> ( FXCollections.observableHashMap () );
     
     private ObjectProperty<Outcome> outcomeProperty = new SimpleObjectProperty<> ();
 
@@ -61,7 +64,7 @@ public class Roller
     private BooleanProperty canceledProperty = new SimpleBooleanProperty ();
 
     private long[] rawProbabilities;
-    private ObservableMap<String,Long> probabilitiesProperty = FXCollections.observableHashMap ();
+    private MapProperty<String,Long> probabilitiesProperty = new SimpleMapProperty<> ( FXCollections.observableHashMap () );
 
     public Roller()
     {
@@ -76,6 +79,7 @@ public class Roller
 
     public Roller lua ( Globals lua )
     {
+        logger.debug ( "Lua: " + lua );
         luaProperty.set ( lua );
         return this;
     }
@@ -98,6 +102,7 @@ public class Roller
 
     public Roller definition ( String definition )
     {
+        logger.debug ( "Def: " + definition );
         definitionProperty.set ( definition );
         return this;
     }
@@ -128,8 +133,9 @@ public class Roller
         return rawProbabilities;
     }
 
-    public Map<String,Long> probabilities()
+    public Map<String,Long> probabilities() throws ProbablityCalculationCancelledException
     {
+        calculateProbabilities ();
         return Collections.unmodifiableMap ( probabilitiesProperty );
     }
 
@@ -153,12 +159,12 @@ public class Roller
         return validProperty;
     }
 
-    public ObservableSet<Trigger> triggersProperty()
+    public SetProperty<Trigger> triggersProperty()
     {
         return triggersProperty;
     }
 
-    public ObservableMap<Integer,String> labelsProperty()
+    public MapProperty<Integer,String> labelsProperty()
     {
         return labelsProperty;
     }
@@ -178,20 +184,24 @@ public class Roller
         return canceledProperty;
     }
 
-    public ObservableMap<String,Long> probabilitiesProperty()
+    public MapProperty<String,Long> probabilitiesProperty() throws ProbablityCalculationCancelledException
     {
-        return FXCollections.unmodifiableObservableMap ( probabilitiesProperty );
+        calculateProbabilities ();
+        return probabilitiesProperty;
     }
 
     public Outcome roll()
     {
+        if ( !isValid() )
+            return null;
+        
         Outcome outcome = new Outcome();
         outcome.roller ( nameProperty.get () );
-
+        
         // Roll Each Dice
 
         VarargsBuilder outcomeArgs = new VarargsBuilder();
-
+        
         for ( Dice die : diceProperty )
         {
             DiceOutcome diceOutcome = die.roll ();
@@ -209,7 +219,7 @@ public class Roller
             outcome.outcome ( labelsProperty.get ( rawOutcome ) );
         else
             outcome.outcome ( String.valueOf ( rawOutcome ) );
-
+        
         //
         // Process Triggers
         //
@@ -322,34 +332,7 @@ public class Roller
     @Override
     public String toString()
     {
-        StringBuilder b = new StringBuilder ();
-
-        b.append ( "Roller: '" + nameProperty.get () + "' -- {" + definitionProperty.get () + "}\n" );
-
-        b.append ( "\tExpression: " + functionProperty.get() + "\n" );
-
-        b.append ( "\tDice:\n" );
-
-        for ( Dice d : diceProperty )
-            b.append ( "\t\t" + d + "\n" );
-
-        if ( !labelsProperty.isEmpty () )
-        {
-            b.append ( "\tLabels:\n" );
-
-            for ( int value : labelsProperty.keySet () )
-                b.append ( "\t\t" + value + " -> '" + labelsProperty.get ( value ) + "'\n" );
-        }
-
-        if ( !triggersProperty.isEmpty () )
-        {
-            b.append ( "\tTriggers:\n" );
-
-            for ( Trigger trigger : triggersProperty )
-                b.append ( "\t\t" + trigger.toString () );
-        }
-        
-        return b.toString ();
+        return "Roller[" + name() + "," + definition () + "]";
     }
 
     @Override
@@ -377,6 +360,8 @@ public class Roller
         if ( definitionProperty.get () == null || definitionProperty.get ().isEmpty () )
             return null;
 
+        logger.debug ( "Parsing: " + definitionProperty.get () );
+        
         diceProperty.clear ();
 
         String functionCode = definitionProperty.get ();
@@ -391,6 +376,8 @@ public class Roller
             String faces = matcher.group ( 5 );
             String weights = matcher.group ( 6 );
 
+            logger.debug ( "Dice: " + adjustment + " " + numDice + " " + faces + " " + weights );
+            
             Die die;
 
             if ( weights != null )
@@ -444,27 +431,20 @@ public class Roller
             dice.canceledProperty ().bind ( canceledProperty () );
 
             functionCode = matcher.replaceFirst ( String.valueOf ( diceVar++ ) );
+            
+            logger.debug ( "Adding Dice: " + dice );
             diceProperty.add ( dice );
         }
 
+        logger.debug ( "Roller: D="+ diceProperty.size () + " " + functionCode );
+        
         try
         {
-            return new Function ( luaProperty.get (), 
-                    "local __ARGS__ = { ... }",
-                    "local A = __ARGS__[  1 ]",
-                    "local B = __ARGS__[  2 ]",
-                    "local C = __ARGS__[  3 ]",
-                    "local D = __ARGS__[  4 ]",
-                    "local E = __ARGS__[  5 ]",
-                    "local F = __ARGS__[  6 ]",
-                    "local G = __ARGS__[  7 ]",
-                    "local H = __ARGS__[  8 ]",
-                    "local I = __ARGS__[  9 ]",
-                    "local J = __ARGS__[ 10 ]",
-                    "return ", functionCode );
+            return new Function ( luaProperty.get (), "local A,B,C,D,E,F,G,H,I,J = unpack({...}) return " + functionCode );
         }
         catch ( LuaError e )
         {
+            logger.error ( "Lua Invalid: " + functionCode );
             return null;
         }
     }

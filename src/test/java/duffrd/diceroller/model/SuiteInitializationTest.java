@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import duffrd.diceroller.model.DiceRollerException;
@@ -19,9 +20,16 @@ import utility.sql.Sql;
 
 public class SuiteInitializationTest
 {
+    public static SuiteInitializer initializer;
+
     public Connection db;
-    public Model model;
-    public SuiteInitializer initializer;
+    public Suite suite;
+    
+    @BeforeClass
+    public static void beforeClass()
+    {
+        initializer = new SuiteInitializer ();        
+    }
     
     @Before
     public void before() throws DiceRollerException, IOException, URISyntaxException, SQLException
@@ -29,9 +37,10 @@ public class SuiteInitializationTest
         db = SqliteDbProvider.provideInMemoryDB ();
         SqliteModelLoader loader = new SqliteModelLoader ( db );
         
-        model = loader.load ();
+        Model model = loader.load ();
         
-        initializer = new SuiteInitializer ();
+        suite = model.newSuite ();
+        suite.name ( "Test" );
     }
     
     @Test
@@ -43,7 +52,7 @@ public class SuiteInitializationTest
     @Test
     public void testBasicSuite () throws SQLException
     {
-        initializer.createSuite ( model, "Test", "Basic Rolls" );
+        initializer.apply ( suite, "Basic Rolls" );
         
         assertEquals (  0, new Sql ( db, "select count(*) from variables").go ().single ().getInt ( 1 ) );
         assertEquals (  2, new Sql ( db, "select count(*) from triggers").go ().single ().getInt ( 1 ) );
@@ -56,7 +65,7 @@ public class SuiteInitializationTest
     @Test
     public void testDndSuite () throws SQLException
     {
-        initializer.createSuite ( model, "Test", "Dungeons & Dragons 3.5" );
+        initializer.apply ( suite, "Dungeons & Dragons 3.5" );
         
         assertEquals ( 31, new Sql ( db, "select count(*) from variables").go ().single ().getInt ( 1 ) );
         assertEquals (  2, new Sql ( db, "select count(*) from triggers").go ().single ().getInt ( 1 ) );
@@ -69,7 +78,7 @@ public class SuiteInitializationTest
     @Test
     public void testHeroSuite () throws SQLException
     {
-        initializer.createSuite ( model, "Test", "Hero System 4.0" );
+        initializer.apply ( suite, "Hero System 4.0" );
         
         assertEquals (  0, new Sql ( db, "select count(*) from variables").go ().single ().getInt ( 1 ) );
         assertEquals (  2, new Sql ( db, "select count(*) from triggers").go ().single ().getInt ( 1 ) );
@@ -82,7 +91,7 @@ public class SuiteInitializationTest
     @Test
     public void testMiscSuite () throws SQLException
     {
-        initializer.createSuite ( model, "Test", "Miscellaneous" );
+        initializer.apply ( suite, "Miscellaneous" );
         
         assertEquals (  0, new Sql ( db, "select count(*) from variables").go ().single ().getInt ( 1 ) );
         assertEquals (  0, new Sql ( db, "select count(*) from triggers").go ().single ().getInt ( 1 ) );
@@ -95,7 +104,7 @@ public class SuiteInitializationTest
     @Test
     public void testMunchkinSuite () throws SQLException
     {
-        initializer.createSuite ( model, "Test", "Munchkin" );
+        initializer.apply ( suite, "Munchkin" );
         
         assertEquals (  0, new Sql ( db, "select count(*) from variables").go ().single ().getInt ( 1 ) );
         assertEquals (  0, new Sql ( db, "select count(*) from triggers").go ().single ().getInt ( 1 ) );

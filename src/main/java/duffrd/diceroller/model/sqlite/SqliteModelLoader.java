@@ -1,9 +1,13 @@
 package duffrd.diceroller.model.sqlite;
 
+import java.lang.invoke.MethodHandles;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import duffrd.diceroller.model.DiceRollerException;
 import duffrd.diceroller.model.Group;
@@ -17,6 +21,8 @@ import utility.sql.Sql;
 
 public class SqliteModelLoader implements ModelLoader
 {
+    private static final Logger logger = LogManager.getLogger ( MethodHandles.lookup().lookupClass() );
+
     Connection db;
 
     public SqliteModelLoader ( Connection conn ) throws DiceRollerException
@@ -35,6 +41,8 @@ public class SqliteModelLoader implements ModelLoader
     @Override
     public Model load () throws DiceRollerException
     {        
+        logger.debug ( "Loading" );
+        
         try
         {
             SqliteModel model = new SqliteModel();
@@ -137,7 +145,7 @@ public class SqliteModelLoader implements ModelLoader
 
     protected void populateGroup ( Group group, int suiteId, int groupId, Set<Trigger> triggers ) throws SQLException
     {
-        for ( ResultSet rs : new Sql ( db, "select id, name, definition from rollers where groupId = ?" ).go ( groupId ) )
+        for ( ResultSet rs : new Sql ( db, "select id, name, definition from rollers where groupId = ? order by sequence" ).go ( groupId ) )
         {
             int rollerId = rs.getInt ( 1 );
             String rollerName = rs.getString ( 2 );
@@ -147,8 +155,9 @@ public class SqliteModelLoader implements ModelLoader
             
             roller.lua ( group.lua () );
             roller.name ( rollerName );
+            logger.debug ( "Def: " + rollerDef );
             roller.definition ( rollerDef );
-            
+                        
             populateRoller ( roller, rollerId, triggers );
             
             roller.animate ( db, suiteId, groupId );

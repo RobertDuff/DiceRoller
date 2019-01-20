@@ -4,15 +4,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.SetProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleSetProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 import javafx.collections.transformation.FilteredList;
 
 public abstract class Model
 {
-    protected ObservableSet<Suite> suitesProperty = FXCollections.observableSet ( new HashSet<>() );
-    protected ObservableList<Outcome> historyProperty = new FilteredList<> ( FXCollections.observableArrayList () );
+    protected SetProperty<Suite> suitesProperty = new SimpleSetProperty<> ( FXCollections.observableSet ( new HashSet<>() ) );
+    protected ListProperty<Outcome> historyProperty = new SimpleListProperty<> ( new FilteredList<> ( FXCollections.observableArrayList () ) );
     
     public Set<Suite> suites()
     {
@@ -24,15 +26,15 @@ public abstract class Model
         return historyProperty;
     }
     
-    public ObservableSet<Suite> suitesProperty()
+    public SetProperty<Suite> suitesProperty()
     {
         return suitesProperty;
     }
     
-    public ObservableList<Outcome> historyProperty()
+    public ListProperty<Outcome> historyProperty()
     {
         return historyProperty;
     }
     
-    public abstract Suite addNewSuite();
+    public abstract Suite newSuite();
 }

@@ -1,22 +1,22 @@
 package duffrd.diceroller.model;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.luaj.vm2.Globals;
 
+import javafx.beans.property.ListProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 
 public abstract class Group
 {
     private ObjectProperty<Globals> luaProperty = new SimpleObjectProperty<> ();
     protected StringProperty nameProperty = new SimpleStringProperty ();
-    protected ObservableList<Roller> rollersProperty = FXCollections.observableArrayList ();
+    protected ListProperty<Roller> rollersProperty = new SimpleListProperty<> ( FXCollections.observableArrayList () );
     
     public Globals lua()
     {
@@ -55,10 +55,11 @@ public abstract class Group
         return nameProperty;
     }
     
-    public ObservableList<Roller> rollersProperty()
+    public ListProperty<Roller> rollersProperty()
     {
         return rollersProperty;
     }
     
-    public abstract Roller addNewRoller();
+    public abstract void addRoller ( Roller roller );    
+    public abstract Roller newRoller();
 }

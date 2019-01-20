@@ -34,20 +34,7 @@ public class Trigger
 
             try
             {
-                return new Function ( luaProperty.get (), 
-                        "local __ARGS__ = { ... }",
-                        "local OUTCOME = __ARGS__[ 1 ]",
-                        "local A = __ARGS__[ 2 ]",
-                        "local B = __ARGS__[ 3 ]",
-                        "local C = __ARGS__[ 4 ]",
-                        "local D = __ARGS__[ 5 ]",
-                        "local E = __ARGS__[ 6 ]",
-                        "local F = __ARGS__[ 7 ]",
-                        "local G = __ARGS__[ 8 ]",
-                        "local H = __ARGS__[ 9 ]",
-                        "local I = __ARGS__[ 10 ]",
-                        "local J = __ARGS__[ 11 ]",
-                        "return ", definitionProperty.get () );
+                return new Function ( luaProperty.get (), "local OUTCOME,A,B,C,D,E,F,G,H,I,J=unpack({...}) return " + definitionProperty.get () );
             }
             catch ( LuaError e )
             {
@@ -127,7 +114,6 @@ public class Trigger
     @Override
     public String toString ()
     {
-        return "Trigger [nameProperty=" + nameProperty.get () + ", definitionProperty=" + definitionProperty.get ()
-                + ", functionProperty=" + functionProperty.get ().toString () + ", validProperty=" + validProperty.get () + "]";
+        return "Trigger [name=" + nameProperty.get () + ", def=" + definitionProperty.get () + ", valid=" + validProperty.get () + "]";
     }
 }

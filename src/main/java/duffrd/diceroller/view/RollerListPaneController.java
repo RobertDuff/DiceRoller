@@ -2,17 +2,22 @@ package duffrd.diceroller.view;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.Set;
+
+import org.fxmisc.easybind.EasyBind;
 
 import com.sun.javafx.scene.control.skin.ListViewSkin;
 
-import duffrd.diceroller.model.DiceRollerException;
+import duffrd.diceroller.model.Group;
+import duffrd.diceroller.model.Outcome;
 import duffrd.diceroller.model.Roller;
-import duffrd.diceroller.model.RollerModel;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
-import javafx.collections.ObservableList;
+import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -46,7 +51,6 @@ public class RollerListPaneController implements Initializable
         public RefresherSkin ( ListView<Roller> listView )
         {
             super ( listView );
-            // TODO Auto-generated constructor stub
         }
         
         public void refresh()
@@ -107,25 +111,16 @@ public class RollerListPaneController implements Initializable
 
                 if ( dragboard.hasString () )
                 {                    
-                    List<Roller> items = getListView ().getItems ();
-                    
                     RollerCell source = ( RollerCell ) event.getGestureSource ();
                     RollerCell target = ( RollerCell ) event.getGestureTarget ();
 
-                    int from = items.indexOf ( source.getItem () );
-                    int to = items.indexOf ( target.getItem () );
+                    int from = getListView ().getItems ().indexOf ( source.getItem () );
+                    int to = getListView ().getItems ().indexOf ( target.getItem () );
                     
-                    try
-                    {
-                        model.moveRoller ( groupName, source.getItem (), to+1 );
-                        items.sort ( ListRearranger.move ( items, from, to ) );
-                        success = true;
-                    }
-                    catch ( DiceRollerException e )
-                    {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }                    
+                    FXCollections.sort ( group.rollersProperty ().getValue (), ListRearranger.move ( group.rollers (), from, to ) );
+                    FXCollections.sort ( rollerList.itemsProperty ().getValue (), ListRearranger.move ( getListView().getItems (), from, to ) );
+                    
+                    success = true;
                 }
                 
                 event.setDropCompleted ( success );
@@ -145,7 +140,10 @@ public class RollerListPaneController implements Initializable
                         rollerProperty.set ( getItem() );
 
                         if ( event.getClickCount () == 2 )
-                            getItem ().roll ();
+                        {
+                            Outcome outcome = getItem ().roll ();
+                            rollListeners.stream ().forEach ( l -> l.roll ( outcome ) );
+                        }
 
                         break;
 
@@ -161,9 +159,7 @@ public class RollerListPaneController implements Initializable
                 public void handle ( ContextMenuEvent event )
                 {                                
                     event.consume ();
-                    
-                    rollerProperty.set ( null );
-                    
+                                        
                     ContextMenu menu = new ContextMenu ();
 
                     MenuItem prob = new MenuItem ( "Probability Chart" );
@@ -205,17 +201,7 @@ public class RollerListPaneController implements Initializable
                         if ( !button.isPresent () || button.get () != ButtonType.OK )
                             return;
                         
-                        try
-                        {
-                            model.deleteRoller ( groupName, roller );
-                        }
-                        catch ( DiceRollerException e1 )
-                        {
-                            e1.printStackTrace();
-                            return;
-                        }
-                        
-                        rollerList.getItems ().remove ( roller );
+                        group.rollers ().remove ( roller );
                     } );
 
                     menu.getItems ().addAll ( prob, new SeparatorMenuItem (), edit, delete );
@@ -249,15 +235,15 @@ public class RollerListPaneController implements Initializable
     @FXML
     public ListView<Roller> rollerList;
 
-    private RollerModel model;
+    private Group group;
     private ObjectProperty<Roller> rollerProperty;
-    private String groupName;
+    private Set<RollListener> rollListeners = new HashSet<>();
 
-    public RollerListPaneController ( RollerModel model, String groupName, ObjectProperty<Roller> rollerProperty )
+    public RollerListPaneController ( Group group, ObjectProperty<Roller> rollerProperty, RollListener... listeners )
     {
-        this.model = model;
-        this.groupName = groupName;
+        this.group = group;
         this.rollerProperty = rollerProperty;
+        rollListeners.addAll ( Arrays.asList ( listeners ) );
     }
 
     @Override
@@ -266,10 +252,8 @@ public class RollerListPaneController implements Initializable
         RefresherSkin skin = new RefresherSkin ( rollerList );
         rollerList.setSkin ( skin );        
         rollerList.setCellFactory ( c -> new RollerCell() );
-    }
-
-    public ObservableList<Roller> rollerListProperty()
-    {
-        return rollerList.getItems ();
+        EasyBind.listBind ( rollerList.getItems (), group.rollersProperty () );
+        
+        rollerList.prefHeightProperty ().bind ( Bindings.size ( rollerList.getItems () ).multiply ( 24 ) );
     }
 }

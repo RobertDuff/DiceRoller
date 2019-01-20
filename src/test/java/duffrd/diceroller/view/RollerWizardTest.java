@@ -1,29 +1,25 @@
 package duffrd.diceroller.view;
 
-import static org.junit.Assert.assertTrue;
-
+import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.luaj.vm2.Globals;
 
-import duffrd.diceroller.model.History;
-import duffrd.diceroller.model.HistoryEntry;
+import duffrd.diceroller.model.Group;
 import duffrd.diceroller.model.Roller;
+import duffrd.diceroller.model.Suite;
+import duffrd.diceroller.model.Trigger;
+import duffrd.diceroller.model.Variable;
 import javafx.application.Application;
-import javafx.collections.ListChangeListener;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
+import utility.lua.LuaProvider;
 
 public class RollerWizardTest extends Application
 {
-    @Test
-    public void test ()
-    {
-        assertTrue ( true );
-    }
-
     public static void main ( String[] args )
     {
         launch ( args );
@@ -35,8 +31,8 @@ public class RollerWizardTest extends Application
         Button button = new Button();
         button.setText ( "Test Wizard" );
         button.setOnAction ( event -> 
-        {
-            RollerWizard wizard = new RollerWizard ( "Group" );
+        {            
+            RollerWizard wizard = new RollerWizard ( testSuite() );
             
             Optional<ButtonType> result = wizard.showAndWait ();
             
@@ -44,13 +40,17 @@ public class RollerWizardTest extends Application
             {
                 Roller roller = wizard.roller ();
                 
-                History.history ().historyProperty ().addListener ( ( ListChangeListener<? super HistoryEntry> ) change -> 
+                Iterator<Entry<Integer,String>> x = roller.labels ().entrySet ().iterator ();
+                
+                while ( x.hasNext () )
                 {
-                    while ( change.next () )
-                        if ( change.wasAdded () )
-                            for ( HistoryEntry e : change.getAddedSubList () )
-                                System.out.println ( "Outcome=" + e.getOutcome () + " Triggers=" + e.getTriggers () );
-                } );
+                    Entry<Integer,String> entry = x.next ();
+                    
+                    if ( entry.getValue () == null || entry.getValue ().isEmpty () )
+                        x.remove ();
+                }
+                
+                roller.outcomeProperty ().addListener ( ( a, o, n ) -> System.out.println ( n ) );
                 
                 System.out.println ( "---" );
                 roller.roll ();
@@ -68,5 +68,26 @@ public class RollerWizardTest extends Application
         
         primaryStage.setScene ( new Scene ( button, 400, 250 ) );
         primaryStage.show ();        
+    }
+    
+    private Suite testSuite()
+    {
+        Globals lua = LuaProvider.newLua ();
+        
+        Suite suite = new Suite()
+        {
+            @Override public Variable newVariable () { return null; }
+            @Override public Trigger  newTrigger  () { return null; }
+            @Override public Group    newGroup    () { return null; }
+        };
+        
+        suite.lua ( lua );
+        suite.triggers ().add ( new Trigger().lua ( lua ).name ( ">1" ).definition ( "A>1" ) );
+        suite.triggers ().add ( new Trigger().lua ( lua ).name ( ">2" ).definition ( "A>2" ) );
+        suite.triggers ().add ( new Trigger().lua ( lua ).name ( ">3" ).definition ( "A>3" ) );
+        suite.triggers ().add ( new Trigger().lua ( lua ).name ( ">4" ).definition ( "A>4" ) );
+        suite.triggers ().add ( new Trigger().lua ( lua ).name ( ">5" ).definition ( "A>5" ) );
+        
+        return suite;
     }
 }

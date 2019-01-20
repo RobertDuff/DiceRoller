@@ -32,6 +32,8 @@ public class SqliteRoller extends Roller
 
     SqliteRoller animate ( Connection db, int suiteId, int groupId )
     {
+        logger.debug ( "Animating Roller" );
+        
         nameProperty.addListener ( ( prop, oldName, newName ) -> 
         {
             try

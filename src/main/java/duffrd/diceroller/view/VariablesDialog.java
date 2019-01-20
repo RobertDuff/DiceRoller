@@ -3,10 +3,13 @@ package duffrd.diceroller.view;
 import java.util.List;
 import java.util.Optional;
 
+import org.fxmisc.easybind.EasyBind;
+
+import duffrd.diceroller.model.Suite;
 import duffrd.diceroller.model.Variable;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ObservableList;
+import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
@@ -160,7 +163,11 @@ public class VariablesDialog extends Dialog<ButtonType>
                     VarCell source = ( VarCell ) event.getGestureSource ();
                     VarCell target = ( VarCell ) event.getGestureTarget ();
 
-                    items.sort ( ListRearranger.move ( items, items.indexOf ( source.getItem () ), items.indexOf ( target.getItem () ) ) );
+                    int from = items.indexOf ( source.getItem () );
+                    int to = items.indexOf ( target.getItem () );
+                    
+                    FXCollections.sort ( suite.variablesProperty ().getValue (), ListRearranger.move ( suite.variables (), from, to ) );
+                    FXCollections.sort ( getListView().itemsProperty ().getValue (), ListRearranger.move ( getListView().getItems (), from, to ) );
                     
                     success = true;
                 }
@@ -189,19 +196,22 @@ public class VariablesDialog extends Dialog<ButtonType>
         }     
     }
 
+    private Suite suite;
     ListView<Variable> varList;
 
-    public VariablesDialog ( String groupName, ObservableList<Variable> variables )
+    public VariablesDialog ( Suite suite )
     {        
+        this.suite = suite;
+        
         setResizable ( true );
         getDialogPane().setPrefWidth ( 400 );
 
         varList = new ListView<>();
         varList.setCellFactory ( param -> new VarCell() );
-        varList.itemsProperty ().set ( variables );
+        EasyBind.listBind ( varList.getItems(), suite.variablesProperty () );
 
-        setTitle ( "Edit Variables: " + groupName );
-        setHeaderText ( "Add, Edit, or Delete Group Variables" );
+        setTitle ( "Edit Variables: " + suite.name () );
+        setHeaderText ( "Add, Edit, or Delete Suite Variables" );
         getDialogPane ().getButtonTypes ().addAll ( ButtonType.CANCEL, ButtonType.OK );
 
         varList.setPrefWidth ( 200 );
@@ -226,7 +236,7 @@ public class VariablesDialog extends Dialog<ButtonType>
                 if ( !name.isPresent () )
                     return;
 
-                varList.getItems ().add ( new Variable ( name.get (), 0 ) );   
+                varList.getItems ().add ( suite.newVariable () );   
             } );
 
             menu.getItems ().addAll ( newVar );

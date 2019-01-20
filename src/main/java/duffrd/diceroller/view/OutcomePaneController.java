@@ -4,20 +4,17 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 import duffrd.diceroller.model.Outcome;
-import duffrd.diceroller.model.Roller;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 import javafx.util.Duration;
 
-public class OutcomePaneController implements Initializable
+public class OutcomePaneController implements Initializable, RollListener
 {
 	@FXML
 	public AnchorPane outcomePane;
@@ -27,46 +24,32 @@ public class OutcomePaneController implements Initializable
 
 	@FXML
 	public Label triggerLabel;
-
-	private ObjectProperty<Outcome> outcomeProperty = new SimpleObjectProperty<> ();
 	
 	/**
 	 * This animation is used to indicate that the value of a the outcome has changed, in case the new value is the same as the old value.
 	 */
 	private Animation animation;
 
-	public void bind ( Roller roller )
+	@Override
+	public void roll ( Outcome outcome )
 	{
-		if ( roller == null )
-		{
-		    outcomeProperty.unbind ();
-		    outcomeProperty.set ( null );
-		}
-		else
-		{
-		    outcomeProperty.bind ( roller.outcomeProperty () );
-		}
+        if ( outcome == null )
+        {
+            outcomeLabel.setText ( "" );
+            triggerLabel.setText ( "" );
+        }
+        else
+        {
+            outcomeLabel.setText ( outcome.outcome () );
+            triggerLabel.setText ( outcome.triggers () );
+            animation.stop ();
+            animation.play ();
+        }
 	}
 
 	@Override
 	public void initialize ( URL location, ResourceBundle resources )
 	{	    
-	    outcomeProperty.addListener ( ( a, o, n ) -> 
-	    {
-	        if ( n == null )
-	        {
-	            outcomeLabel.setText ( "" );
-	            triggerLabel.setText ( "" );
-	        }
-	        else
-	        {
-	            outcomeLabel.setText ( n.outcome () );
-	            triggerLabel.setText ( n.triggers () );
-	            animation.stop ();
-	            animation.play ();
-	        }
-	    } );
-	    
 		Timeline timeline = new Timeline();
 
 		//
@@ -90,5 +73,8 @@ public class OutcomePaneController implements Initializable
 		timeline.setAutoReverse ( false );
 
 		animation = timeline;
+		
+		outcomeLabel.setText ( "" );
+		triggerLabel.setText ( "" );
 	}
 }

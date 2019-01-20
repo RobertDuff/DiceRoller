@@ -3,22 +3,23 @@ package duffrd.diceroller.view;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-import duffrd.diceroller.model.DiceRollerException;
+import duffrd.diceroller.model.Group;
 import duffrd.diceroller.model.Model;
 import duffrd.diceroller.model.Roller;
 import duffrd.diceroller.model.Suite;
-import duffrd.diceroller.model.Variable;
 import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -29,7 +30,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.SplitPane;
@@ -81,6 +81,9 @@ public class MainWindowController implements Initializable
     public MenuItem newSuiteMenuItem;
     
     @FXML
+    public MenuItem renameSuiteMenuItem;
+    
+    @FXML
     public MenuItem deleteSuiteMenuItem;
     
     @FXML
@@ -90,69 +93,117 @@ public class MainWindowController implements Initializable
     public MenuItem aboutItem;
 	
     private HostServices hostServices;
+    private StringProperty titleProperty;
 	private Model model;
+	private OutcomePaneController outcomeController;
+	private HistoryPaneController historyController;
 	
 	private ObjectProperty<Suite> suiteProperty = new SimpleObjectProperty<> ();
+	private ListChangeListener<Group> groupsListener;
+	
 	private ObjectProperty<Roller> rollerProperty = new SimpleObjectProperty<> ();
 
-	public MainWindowController ( HostServices hostServices, Model model )
+	public MainWindowController ( HostServices hostServices, StringProperty titleProperty, Model model )
 	{
 	    this.hostServices = hostServices;
+	    this.titleProperty = titleProperty;
 	    this.model = model;
 	}
 	
 	@Override
 	public void initialize ( URL location, ResourceBundle resources )
 	{	    
-	    suiteProperty.addListener ( ( prop, oldValue, newValue ) -> setSuite() );
+	    suiteProperty.addListener ( ( prop, oldValue, newValue ) -> setSuite ( oldValue, newValue ) );
+	    
+	    titleProperty.set ( "Dice Roller" );
 	    
 	    switchSuiteMenuItem.setOnAction ( event -> chooseSuite() );
-        newRollerItem.setOnAction ( event -> newRoller ( chooser.getExpandedPane () ) );
+	    switchSuiteMenuItem.disableProperty ().bind ( Bindings.lessThan ( 2, model.suitesProperty ().sizeProperty () ) );
+	    
+        newSuiteMenuItem.setOnAction ( event -> newSuite() );
+        
+        renameSuiteMenuItem.setOnAction ( event -> renameSuite ( suiteProperty.get () ) );
+        renameSuiteMenuItem.disableProperty ().bind ( Bindings.isNull ( suiteProperty ) );
+        
+        deleteSuiteMenuItem.setOnAction ( event -> deleteSuite ( suiteProperty.get () ) );
+	    deleteSuiteMenuItem.disableProperty ().bind ( Bindings.isNull ( suiteProperty ) );
+	    
+        newRollerItem.setOnAction ( event -> newRoller ( suiteProperty.get (), ( Group ) chooser.getExpandedPane ().getUserData () ) );
         newRollerItem.disableProperty ().bind ( Bindings.isNull ( chooser.expandedPaneProperty () ) );
         
-        editRollerItem.setOnAction ( event -> editRoller ( chooser.getExpandedPane ().getText (), rollerProperty.get () ) );
+        editRollerItem.setOnAction ( event -> editRoller ( rollerProperty.get () ) );
         editRollerItem.disableProperty ().bind ( Bindings.isNull ( rollerProperty ) );
         
-        deleteRollerItem.setOnAction ( event -> deleteRoller ( chooser.getExpandedPane ().getText (), rollerProperty.get () ) );
+        deleteRollerItem.setOnAction ( event -> deleteRoller ( ( Group ) chooser.getExpandedPane ().getUserData(), rollerProperty.get () ) );
         deleteRollerItem.disableProperty ().bind ( Bindings.isNull ( rollerProperty ) );
 	    
-	    newGroupItem.setOnAction ( event -> newGroup() );
+	    newGroupItem.setOnAction ( event -> newGroup ( suiteProperty.get () ) );
 	    
-	    renameGroupItem.setOnAction ( e -> renameGroup ( chooser.getExpandedPane () ) );
+	    renameGroupItem.setOnAction ( e -> renameGroup ( ( Group ) chooser.getExpandedPane ().getUserData () ) );
 	    renameGroupItem.disableProperty ().bind ( Bindings.isNull ( chooser.expandedPaneProperty () ) );
 
-        deleteGroupItem.setOnAction ( event -> deleteGroup ( chooser.getExpandedPane () ) );
+        deleteGroupItem.setOnAction ( event -> deleteGroup ( suiteProperty.get (), ( Group ) chooser.getExpandedPane ().getUserData () ) );
         deleteGroupItem.disableProperty ().bind ( Bindings.isNull ( chooser.expandedPaneProperty () ) );
 	    
 		try
 		{
 			FXMLLoader outcomeLoader = new FXMLLoader ( getClass().getResource ( "OutcomePane.fxml" ) );
 			AnchorPane outcomePane = outcomeLoader.load();
-			final OutcomePaneController outcomePaneController = outcomeLoader.getController ();
+			outcomeController = outcomeLoader.getController ();
 
-			HistoryPaneController historyController = new HistoryPaneController ( model.historyProperty () );
 			FXMLLoader historyLoader = new FXMLLoader ( getClass().getResource ( "HistoryPane.fxml" ) );
-			historyLoader.setController ( historyController );
 			AnchorPane historyPane = historyLoader.load ();
+			historyController = historyLoader.getController ();
 
 			detailPane.getItems ().addAll ( outcomePane, historyPane );
-			detailPane.setDividerPosition ( 0, 0.3 );
-
-			rollerProperty.addListener ( ( p, o, n ) -> outcomePaneController.bind ( n ) );
-			
-			for ( String groupName : model.groupNames () )
-                chooser.getPanes ().add ( createGroupPane ( groupName ) );
-		}
-		catch ( IOException e )
-		{
-			//TODO: Show Alert!
-			e.printStackTrace();
-		}
-        catch ( DiceRollerException e )
+            detailPane.setDividerPosition ( 0, 0.3 );
+        }
+        catch ( IOException e )
         {
-            // TODO Auto-generated catch block
+            //TODO: Show Alert!
             e.printStackTrace();
         }
+
+		groupsListener = ( ListChangeListener.Change<? extends Group> change ) -> 
+		{
+		    while ( change.next () )
+		    {
+		        if ( change.wasRemoved () )
+		        {
+		            for ( Group group : change.getRemoved () )
+		            {
+		                Iterator<TitledPane> i = chooser.getPanes ().iterator ();
+                    
+		                while ( i.hasNext () )
+		                {
+		                    if ( i.next ().getUserData () == group )
+		                        i.remove ();
+		                }
+		            }
+		        }
+		        
+		        if ( change.wasAdded () )
+		        {
+		            int pos = change.getFrom ();
+		            
+		            for ( Group group : change.getAddedSubList () )
+                        try
+                        {
+                            chooser.getPanes ().add ( pos++, createGroupPane ( suiteProperty.get (), group ) );
+                        }
+                        catch ( IOException e1 )
+                        {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+		        }
+		        
+		        if ( change.wasReplaced () || change.wasUpdated () )
+		        {
+		            //TODO: Should never happen
+		        }
+		    }
+		};
 		
 		helpItem.setOnAction ( event -> 
 		{ 
@@ -165,8 +216,30 @@ public class MainWindowController implements Initializable
                 e1.printStackTrace();
             } 
 		} );
+		
+		selectSuite ();
 	}
 
+	private void selectSuite()
+	{
+	    Platform.runLater ( () -> 
+	    {
+	        switch ( model.suites ().size () )
+	        {
+	        case 0:
+	            newSuite();
+	            break;
+
+	        case 1:
+	            suiteProperty.set ( model.suites ().iterator ().next () );
+	            break;
+
+	        default:
+	            chooseSuite ();	  
+	        }
+	    } );
+	}
+	
 	private void chooseSuite()
 	{
 	    ChoiceDialog<Suite> dialog = new ChoiceDialog<Suite> ( null, model.suites () );
@@ -177,17 +250,101 @@ public class MainWindowController implements Initializable
 	        suiteProperty.set ( suite.get () );
 	}
 	
-	private void setSuite()
+	private void setSuite ( Suite oldSuite, Suite newSuite )
 	{
+	    //
+	    // Remove old Group Panes
+	    //
 	    
+	    if ( oldSuite != null )
+	    {
+	        oldSuite.groupsProperty ().removeListener ( groupsListener );
+	        chooser.getPanes ().clear ();
+	        titleProperty.set ( "Dice Roller" );
+	    }
+	    
+	    //
+	    // Create New Group Panes
+	    //
+	    
+	    try
+        {
+            if ( newSuite != null )
+            {
+                newSuite.groupsProperty ().addListener ( groupsListener );
+                
+                for ( Group group : newSuite.groups () )
+                    chooser.getPanes ().add ( createGroupPane ( newSuite, group ) );
+                
+                titleProperty.set ( "Dice Roller: " + newSuite.name () );
+            }
+        }
+        catch ( IOException e )
+        {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 	}
+    
+    private void newSuite()
+	{
+        try
+        {
+            NewSuiteDialog newSuiteDialog = new NewSuiteDialog ( model );
+            
+            Optional<ButtonType> button = newSuiteDialog.showAndWait ();
+            
+            if ( button.isPresent () && button.get () == ButtonType.OK )
+                suiteProperty.set ( newSuiteDialog.suite() );
+        }
+        catch ( Exception e )
+        {
+            e.printStackTrace();
+        }
+	}
+    
+    private void renameSuite ( Suite suite )
+    {
+        System.out.println ( "Renaming: " + suite );
+        if ( suite == null )
+            return;
+        
+        TextInputDialog dialog = new TextInputDialog ( suite.name () );
+        dialog.setTitle ( "Suite: " + suite.name () );
+        dialog.setHeaderText ( "Please enter a new name for the Suite" );
+        dialog.setContentText ( "Suite Name:" );
+        
+        Optional<String> newName = dialog.showAndWait ();
+        
+        if ( !newName.isPresent () )
+            return;
+        
+        suite.name ( newName.get() );
+        titleProperty.set ( "Dice Roller: " + suite.name () );
+    }
+
+    private void deleteSuite ( Suite suite )
+    {
+        if ( suite == null )
+            return;
+        
+        Alert alert = new Alert ( AlertType.CONFIRMATION );
+        alert.setTitle ( "Suite: " + suite.name() );
+        alert.setHeaderText ( "You are about to delete the " + suite.name () + " suite. This cannot be undone!" );
+        alert.setContentText ( "Are you sure?" );
+        Optional<ButtonType> button = alert.showAndWait ();
+        
+        if ( !button.isPresent () || button.get () != ButtonType.OK )
+            return;
+        
+        model.suites ().remove ( suite );
+        suiteProperty.set ( null );
+        selectSuite ();
+    }
 	
-	private void newRoller ( TitledPane groupPane )
+	private void newRoller ( Suite suite, Group group )
     {        
-	    if ( groupPane == null )
-	        return;
-	    
-	    RollerWizard wizard = new RollerWizard ( groupPane.getText () );
+	    RollerWizard wizard = new RollerWizard ( suite );
 	    Optional<ButtonType> result = wizard.showAndWait ();
 	    
 	    System.out.println ( result );
@@ -195,24 +352,10 @@ public class MainWindowController implements Initializable
         if ( !result.isPresent () || result.get () != ButtonType.FINISH )
             return;
         
-        try
-        {
-            Roller roller = wizard.roller ();
-            
-            model.createRoller ( groupPane.getText (), roller );
-            
-            @SuppressWarnings ( "unchecked" )
-            ListView<Roller> lv = ( ListView<Roller> ) ( ( AnchorPane ) groupPane.getContent () ).getChildren ().get ( 0 );
-            lv.getItems ().add ( roller );
-        }
-        catch ( DiceRollerException e )
-        {
-            e.printStackTrace();
-            return;
-        }
+        group.addRoller ( wizard.roller () );
     }
 
-    private void editRoller ( String group, Roller roller )
+    private void editRoller ( Roller roller )
     {
         if ( roller == null )
             return;
@@ -227,23 +370,10 @@ public class MainWindowController implements Initializable
         if ( !name.isPresent () )
             return;
         
-        try
-        {            
-            model.renameRoller ( group, roller.name (), name.get () );
-            roller.name ( name.get () );
-            
-            @SuppressWarnings ( "unchecked" )
-            ListView<Roller> lv = ( ListView<Roller> ) ( ( AnchorPane ) chooser.getExpandedPane ().getContent () ).getChildren ().get ( 0 );
-            ( ( RollerListPaneController.RefresherSkin ) lv.getSkin () ).refresh();
-        }
-        catch ( DiceRollerException e )
-        {
-            e.printStackTrace();
-            return;
-        }
+        roller.name ( name.get () );
     }
 
-    private void deleteRoller ( String group, Roller roller )
+    private void deleteRoller ( Group group, Roller roller )
     {
         if ( roller == null )
             return;
@@ -257,28 +387,11 @@ public class MainWindowController implements Initializable
         if ( !button.isPresent () || button.get () != ButtonType.OK )
             return;
         
-        try
-        {
-            model.deleteRoller ( group, roller );
-        }
-        catch ( DiceRollerException e )
-        {
-            e.printStackTrace();
-            return;
-        }
-        
-        for ( TitledPane pane : chooser.getPanes () )
-        {
-            @SuppressWarnings ( "unchecked" )
-            ListView<Roller> lv = ( ListView<Roller> ) ( ( AnchorPane ) pane.getContent () ).getChildren ().get ( 0 );
-            if ( lv.getItems ().remove ( roller ) )
-                break;
-        }
-        
+        group.rollers ().remove ( roller );        
         rollerProperty.set ( null );
     }
 
-    private void newGroup ()
+    private void newGroup ( Suite suite )
     {
         TextInputDialog newGroupDialog = new TextInputDialog ();
         newGroupDialog.setTitle ( "Create a New Group" );
@@ -290,25 +403,18 @@ public class MainWindowController implements Initializable
         if ( !name.isPresent () )
             return;
         
-        try
-        {
-            model.createGroup ( name.get () );
-            chooser.getPanes ().add ( createGroupPane ( name.get () ) );
-        }
-        catch ( DiceRollerException | IOException e )
-        {
-            e.printStackTrace();
-            return;
-        }
+        Group group = suite.newGroup ();
+        group.name ( name.get () );
     }
 
-    private TitledPane createGroupPane ( String groupName ) throws IOException, DiceRollerException
+    private TitledPane createGroupPane ( Suite suite, Group group ) throws IOException
     {
-        RollerListPaneController rollerListController = new RollerListPaneController ( model, groupName, rollerProperty );
+        RollerListPaneController rollerListController = new RollerListPaneController ( group, rollerProperty, outcomeController, historyController );
         FXMLLoader rollerListLoader = new FXMLLoader ( getClass().getResource ( "RollerListPane.fxml" ) );
         rollerListLoader.setController ( rollerListController );
         final TitledPane groupPane = rollerListLoader.load ();
-        groupPane.setText ( groupName );
+        groupPane.setUserData ( group );
+        groupPane.setText ( group.name () );
         groupPane.setUserData ( rollerListController );
         
         groupPane.setOnContextMenuRequested ( event -> 
@@ -317,19 +423,15 @@ public class MainWindowController implements Initializable
             
             ContextMenu menu = new ContextMenu();
             
-            MenuItem vars = new MenuItem();
-            vars.setText ( "Edit Variables" );
-            vars.setOnAction ( e -> editGroupVariables ( groupPane.getText () ) );
-            
             MenuItem rename = new MenuItem();
             rename.setText ( "Rename" );
-            rename.setOnAction ( e -> renameGroup ( groupPane ) );
+            rename.setOnAction ( e -> renameGroup ( group ) );
             
             MenuItem delete = new MenuItem();
             delete.setText ( "Delete" );
-            delete.setOnAction ( e -> deleteGroup ( groupPane ) );
+            delete.setOnAction ( e -> deleteGroup ( suite, group ) );
             
-            menu.getItems ().addAll ( vars, new SeparatorMenuItem (), rename, delete );
+            menu.getItems ().addAll ( rename, delete );
             
             menu.show ( ( Node ) event.getSource (), event.getScreenX (), event.getScreenY () );
         } );
@@ -388,18 +490,11 @@ public class MainWindowController implements Initializable
 
                 int from = panes.indexOf ( source );
                 int to = panes.indexOf ( target );
+
+                FXCollections.sort ( suite.groupsProperty ().getValue (), ListRearranger.move ( suite.groups (), from, to ) );
+                chooser.getPanes ().sort ( ListRearranger.move ( chooser.getPanes (), from, to ) );
                 
-                try
-                {
-                    model.moveGroup ( source.getText (), to+1 );
-                    panes.sort ( ListRearranger.move ( panes, from, to ) );
-                    success = true;
-                }
-                catch ( DiceRollerException e )
-                {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+                success = true;
             }
             
             event.setDropCompleted ( success );
@@ -408,18 +503,16 @@ public class MainWindowController implements Initializable
         
         groupPane.setOnDragDone ( DragEvent::consume );
         
-        rollerListController.rollerListProperty ().addAll ( model.rollers ( groupName ) );
-        
         return groupPane;
     }
     
-    private void renameGroup ( TitledPane group )
+    private void renameGroup ( Group group )
 	{
         if ( group == null )
             return;
         
-        TextInputDialog dialog = new TextInputDialog ( group.getText () );
-        dialog.setTitle ( "Group: " + group.getText () );
+        TextInputDialog dialog = new TextInputDialog ( group.name () );
+        dialog.setTitle ( "Group: " + group.name () );
         dialog.setHeaderText ( "Please enter a new name for the Group" );
         dialog.setContentText ( "Group Name:" );
         
@@ -428,68 +521,29 @@ public class MainWindowController implements Initializable
         if ( !newName.isPresent () )
             return;
         
-        try
-        {
-            model.renameGroup ( group.getText (), newName.get () );
-        }
-        catch ( DiceRollerException e )
-        {
-            e.printStackTrace();
-            return;
-        }
-        
-        group.setText ( newName.get () );
+        group.name ( newName.get() );
 	}
 	
-	private void deleteGroup ( TitledPane group )
+	private void deleteGroup ( Suite suite, Group group )
 	{
 	    if ( group == null )
 	        return;
         
         Alert alert = new Alert ( AlertType.CONFIRMATION );
-        alert.setTitle ( "Group: " + group.getText () );
-        alert.setHeaderText ( "You are about to delete the " + group.getText () + " group. This cannot be undone!" );
+        alert.setTitle ( "Group: " + group.name() );
+        alert.setHeaderText ( "You are about to delete the " + group.name () + " group. This cannot be undone!" );
         alert.setContentText ( "Are you sure?" );
         Optional<ButtonType> button = alert.showAndWait ();
         
         if ( !button.isPresent () || button.get () != ButtonType.OK )
             return;
-        
 	    
-	    try
-	    {
-	        model.deleteGroup ( group.getText () );
-	    }
-	    catch ( DiceRollerException e )
-	    {
-	        e.printStackTrace();
-	        return;
-	    }
-	    
-	    chooser.getPanes ().remove ( group );
+        suite.groups ().remove ( group );
 	}
 	
-	private void editGroupVariables ( String group )
+	private void editVariables ( Suite suite )
 	{	    
-	    try
-        {
-	        ObservableList<Variable> variables = FXCollections.observableArrayList ();
-	        variables.addAll ( model.groupVariables ( group ) );
-	        
-            VariablesDialog dialog = new VariablesDialog ( group,variables );
-            
-            Optional<ButtonType> button = dialog.showAndWait ();
-            
-            if ( !button.isPresent () || button.get () != ButtonType.OK )
-                return;
-
-            model.updateGroupVariables ( group, variables );
-        }
-        catch ( DiceRollerException e )
-        {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+	    new VariablesDialog ( suite ).showAndWait ();
 	}
 	
     public void exit()

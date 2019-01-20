@@ -18,7 +18,6 @@ import javafx.scene.control.Tooltip;
 public class ProbabilityController implements Initializable
 {
     private static final int NUM_TEST_ITERATIONS = 100_000;
-    private static final boolean TEST_MODE = true;
     
     @FXML
     public BarChart<String,Double> probabilityChart;
@@ -87,7 +86,6 @@ public class ProbabilityController implements Initializable
         }
         catch ( IOException e1 )
         {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }        
     }
@@ -104,8 +102,8 @@ public class ProbabilityController implements Initializable
         
         for ( int i = 0; i < NUM_TEST_ITERATIONS; i++ )
         {
-            roller.roll ( TEST_MODE );
-            String name = roller.outcomeProperty ().get ();
+            roller.roll();
+            String name = roller.lastOutcome ().outcome ();
             
             outcomeCounts.put ( name, outcomeCounts.get ( name ) + 1 );
         }
