@@ -12,12 +12,12 @@ import org.fxmisc.easybind.EasyBind;
 
 import com.sun.javafx.scene.control.skin.ListViewSkin;
 
+import duffrd.diceroller.model.DiceRollerException;
 import duffrd.diceroller.model.Group;
+import duffrd.diceroller.model.Model;
 import duffrd.diceroller.model.Outcome;
 import duffrd.diceroller.model.Roller;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -42,7 +42,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import utility.arrays.ListRearranger;
 
 public class RollerListPaneController implements Initializable
 {
@@ -114,11 +113,17 @@ public class RollerListPaneController implements Initializable
                     RollerCell source = ( RollerCell ) event.getGestureSource ();
                     RollerCell target = ( RollerCell ) event.getGestureTarget ();
 
-                    int from = getListView ().getItems ().indexOf ( source.getItem () );
                     int to = getListView ().getItems ().indexOf ( target.getItem () );
-                    
-                    FXCollections.sort ( group.rollersProperty ().getValue (), ListRearranger.move ( group.rollers (), from, to ) );
-                    FXCollections.sort ( rollerList.itemsProperty ().getValue (), ListRearranger.move ( getListView().getItems (), from, to ) );
+
+                    Model model = source.getItem ().group ().suite ().model ();
+                    try
+                    {
+                        model.moveRoller ( source.getItem (), to );
+                    }
+                    catch ( DiceRollerException e )
+                    {
+                        new ExceptionAlert ( "Move Roller", e ).showAndWait ();
+                    }
                     
                     success = true;
                 }
@@ -137,14 +142,11 @@ public class RollerListPaneController implements Initializable
                     switch ( event.getButton () )
                     {
                     case PRIMARY:
-                        rollerProperty.set ( getItem() );
-
                         if ( event.getClickCount () == 2 )
                         {
                             Outcome outcome = getItem ().roll ();
                             rollListeners.stream ().forEach ( l -> l.roll ( outcome ) );
                         }
-
                         break;
 
                     default:
@@ -180,8 +182,7 @@ public class RollerListPaneController implements Initializable
                         }
                         catch ( IOException x )
                         {
-                            // TODO Auto-generated catch block
-                            x.printStackTrace();
+                            new ExceptionAlert ( "Showing Probability Chart", x ).showAndWait ();
                         }
                     } );
                     
@@ -201,7 +202,14 @@ public class RollerListPaneController implements Initializable
                         if ( !button.isPresent () || button.get () != ButtonType.OK )
                             return;
                         
-                        group.rollers ().remove ( roller );
+                        try
+                        {
+                            roller.group ().suite ().model ().deleteRoller ( roller );
+                        }
+                        catch ( DiceRollerException e1 )
+                        {
+                            new ExceptionAlert ( "Delete Roller", e1 ).showAndWait ();
+                        }
                     } );
 
                     menu.getItems ().addAll ( prob, new SeparatorMenuItem (), edit, delete );
@@ -220,6 +228,7 @@ public class RollerListPaneController implements Initializable
             {
                 setText ( null );
                 setGraphic ( null );
+                setTooltip ( null );
                 return;
             }
 
@@ -236,13 +245,11 @@ public class RollerListPaneController implements Initializable
     public ListView<Roller> rollerList;
 
     private Group group;
-    private ObjectProperty<Roller> rollerProperty;
     private Set<RollListener> rollListeners = new HashSet<>();
 
-    public RollerListPaneController ( Group group, ObjectProperty<Roller> rollerProperty, RollListener... listeners )
+    public RollerListPaneController ( Group group, RollListener... listeners )
     {
         this.group = group;
-        this.rollerProperty = rollerProperty;
         rollListeners.addAll ( Arrays.asList ( listeners ) );
     }
 
@@ -255,5 +262,15 @@ public class RollerListPaneController implements Initializable
         EasyBind.listBind ( rollerList.getItems (), group.rollersProperty () );
         
         rollerList.prefHeightProperty ().bind ( Bindings.size ( rollerList.getItems () ).multiply ( 24 ) );
+    }
+    
+    public Group group()
+    {
+        return group;
+    }
+    
+    public void close()
+    {
+        
     }
 }

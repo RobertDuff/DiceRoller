@@ -16,13 +16,25 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 
-public abstract class Suite
+public class Suite
 {
+    protected ObjectProperty<Model> modelProperty = new SimpleObjectProperty<> ();
     protected ObjectProperty<Globals> luaProperty = new SimpleObjectProperty<> ();
     protected StringProperty nameProperty = new SimpleStringProperty ();
     protected ListProperty<Variable> variablesProperty = new SimpleListProperty<> ( FXCollections.observableArrayList () );
     protected SetProperty<Trigger> triggersProperty = new SimpleSetProperty<> ( FXCollections.observableSet ( new HashSet<>() ) );
     protected ListProperty<Group> groupsProperty = new SimpleListProperty<> ( FXCollections.observableArrayList () );
+    
+    public Model model()
+    {
+        return modelProperty.get ();
+    }
+    
+    public Suite model ( Model model )
+    {
+        modelProperty.set ( model );
+        return this;
+    }
     
     public Globals lua()
     {
@@ -61,6 +73,16 @@ public abstract class Suite
         return groupsProperty;
     }
     
+    public ObjectProperty<Model> modelProperty()
+    {
+        return modelProperty;
+    }
+    
+    public ObjectProperty<Globals> luaProperty()
+    {
+        return luaProperty;
+    }
+    
     public StringProperty nameProperty()
     {
         return nameProperty;
@@ -80,10 +102,6 @@ public abstract class Suite
     {
         return groupsProperty;
     }
-    
-    public abstract Variable newVariable();
-    public abstract Trigger newTrigger();
-    public abstract Group newGroup();
 
     @Override
     public String toString ()

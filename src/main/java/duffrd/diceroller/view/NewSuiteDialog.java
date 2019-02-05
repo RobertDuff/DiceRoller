@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import duffrd.diceroller.model.DiceRollerException;
 import duffrd.diceroller.model.Model;
 import duffrd.diceroller.model.Suite;
 import duffrd.diceroller.model.SuiteInitializer;
@@ -17,10 +18,9 @@ import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TextField;
 
 public class NewSuiteDialog extends Dialog<ButtonType> implements Initializable
-{
-    private static final SuiteInitializer suiteInitializer = new SuiteInitializer ();
-    
+{    
     private Model model;
+    private SuiteInitializer suiteInitializer;
     
     @FXML
     public TextField nameTextField;
@@ -28,9 +28,10 @@ public class NewSuiteDialog extends Dialog<ButtonType> implements Initializable
     @FXML
     public ListView<String> templateListView;
     
-    public NewSuiteDialog ( Model model ) throws IOException
+    public NewSuiteDialog ( Model model ) throws IOException, DiceRollerException
     {
         this.model = model;        
+        suiteInitializer = new SuiteInitializer ( model );
         
         setTitle ( "Create New Suite" );
         setResizable ( true );
@@ -52,17 +53,14 @@ public class NewSuiteDialog extends Dialog<ButtonType> implements Initializable
         nameTextField.selectAll ();
     }
 
-    public Suite suite()
+    public Suite suite() throws DiceRollerException
     {
-        Suite suite = model.newSuite ();            
-        suite.name ( nameTextField.getText () );
+        Suite suite = model.createSuite ( nameTextField.getText () );            
         
         String template = templateListView.getSelectionModel ().getSelectedItem ();
         
         if ( template != null )
             suiteInitializer.apply ( suite, template );
-        
-        model.suites ().add ( suite );
         
         return suite;
     }

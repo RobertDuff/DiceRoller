@@ -45,10 +45,9 @@ public class SqliteModelLoader implements ModelLoader
         
         try
         {
-            SqliteModel model = new SqliteModel();
+            SqliteModel model = new SqliteModel ( db );
 
             populateModel ( model );
-            model.animate ( db );
             
             return model;
         }
@@ -67,11 +66,11 @@ public class SqliteModelLoader implements ModelLoader
             
             SqliteSuite suite = new SqliteSuite ( suiteId );
             
+            suite.model ( model );
             suite.lua ( LuaProvider.newLua () );
             suite.name ( suiteName );
                         
             populateSuite ( suite, suiteId );
-            suite.animate ( db );
             
             model.suitesProperty ().add ( suite );
         }
@@ -91,12 +90,10 @@ public class SqliteModelLoader implements ModelLoader
             
             SqliteVariable var = new SqliteVariable ( varId );
             
-            var.lua ( suite.lua () );
+            var.suite ( suite );
             var.name ( varName );
             var.value ( varVal );
-            
-            var.animate ( db, suiteId );
-            
+                        
             suite.variablesProperty ().add ( var );
         }
         
@@ -112,12 +109,10 @@ public class SqliteModelLoader implements ModelLoader
             
             SqliteTrigger trig= new SqliteTrigger ( trigId );
             
-            trig.lua ( suite.lua () );
+            trig.suite ( suite );
             trig.name ( trigName );
             trig.definition ( trigDef );
-            
-            trig.animate ( db, suiteId );
-            
+                        
             suite.triggersProperty ().add ( trig );        
         }
 
@@ -132,12 +127,10 @@ public class SqliteModelLoader implements ModelLoader
             
             SqliteGroup group = new SqliteGroup ( groupId );
             
-            group.lua ( suite.lua () );
+            group.suite ( suite );
             group.name ( groupName );
 
             populateGroup ( group, suiteId, groupId, suite.triggersProperty () );
-            
-            group.animate ( db, suiteId );
             
             suite.groupsProperty ().add ( group );
         }
@@ -153,15 +146,13 @@ public class SqliteModelLoader implements ModelLoader
             
             SqliteRoller roller = new SqliteRoller ( rollerId );
             
-            roller.lua ( group.lua () );
+            roller.group ( group );
             roller.name ( rollerName );
             logger.debug ( "Def: " + rollerDef );
             roller.definition ( rollerDef );
                         
             populateRoller ( roller, rollerId, triggers );
-            
-            roller.animate ( db, suiteId, groupId );
-            
+                        
             group.rollersProperty ().add ( roller );
         }
     }

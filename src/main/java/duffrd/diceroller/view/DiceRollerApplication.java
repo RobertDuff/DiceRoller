@@ -16,8 +16,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -125,7 +123,7 @@ public class DiceRollerApplication extends Application
 			
 			Platform.runLater ( () ->
 			{
-				new Alert ( AlertType.ERROR, "Could not initialize Main Window" ).showAndWait ();
+				new ExceptionAlert ( "Main Window Initialization", e ).showAndWait ();
 				Platform.exit ();
 			} );
 		}

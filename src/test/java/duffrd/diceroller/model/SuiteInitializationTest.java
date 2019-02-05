@@ -8,12 +8,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import duffrd.diceroller.model.DiceRollerException;
-import duffrd.diceroller.model.Model;
-import duffrd.diceroller.model.SuiteInitializer;
 import duffrd.diceroller.model.sqlite.SqliteDbProvider;
 import duffrd.diceroller.model.sqlite.SqliteModelLoader;
 import utility.sql.Sql;
@@ -25,12 +21,6 @@ public class SuiteInitializationTest
     public Connection db;
     public Suite suite;
     
-    @BeforeClass
-    public static void beforeClass()
-    {
-        initializer = new SuiteInitializer ();        
-    }
-    
     @Before
     public void before() throws DiceRollerException, IOException, URISyntaxException, SQLException
     {
@@ -39,8 +29,9 @@ public class SuiteInitializationTest
         
         Model model = loader.load ();
         
-        suite = model.newSuite ();
-        suite.name ( "Test" );
+        initializer = new SuiteInitializer ( model );        
+
+        suite = model.createSuite ( "Test" );
     }
     
     @Test
@@ -50,7 +41,7 @@ public class SuiteInitializationTest
     }
     
     @Test
-    public void testBasicSuite () throws SQLException
+    public void testBasicSuite () throws SQLException, DiceRollerException
     {
         initializer.apply ( suite, "Basic Rolls" );
         
@@ -63,7 +54,7 @@ public class SuiteInitializationTest
     }
     
     @Test
-    public void testDndSuite () throws SQLException
+    public void testDndSuite () throws SQLException, DiceRollerException
     {
         initializer.apply ( suite, "Dungeons & Dragons 3.5" );
         
@@ -76,7 +67,7 @@ public class SuiteInitializationTest
     }
     
     @Test
-    public void testHeroSuite () throws SQLException
+    public void testHeroSuite () throws SQLException, DiceRollerException
     {
         initializer.apply ( suite, "Hero System 4.0" );
         
@@ -89,7 +80,7 @@ public class SuiteInitializationTest
     }
     
     @Test
-    public void testMiscSuite () throws SQLException
+    public void testMiscSuite () throws SQLException, DiceRollerException
     {
         initializer.apply ( suite, "Miscellaneous" );
         
@@ -102,7 +93,7 @@ public class SuiteInitializationTest
     }
     
     @Test
-    public void testMunchkinSuite () throws SQLException
+    public void testMunchkinSuite () throws SQLException, DiceRollerException
     {
         initializer.apply ( suite, "Munchkin" );
         

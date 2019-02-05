@@ -16,6 +16,7 @@ import utility.lua.Function;
 
 public class Trigger
 {
+    private ObjectProperty<Suite> suiteProperty = new SimpleObjectProperty<> ();
     private ObjectProperty<Globals> luaProperty = new SimpleObjectProperty<> ();
     protected StringProperty nameProperty = new SimpleStringProperty ();
     protected StringProperty definitionProperty = new SimpleStringProperty ();
@@ -24,6 +25,8 @@ public class Trigger
 
     public Trigger()
     {
+        suiteProperty.addListener ( ( a, o, n ) -> luaProperty.bind ( n.luaProperty () ) );
+
         functionProperty.bind ( Bindings.createObjectBinding ( () -> 
         {
             if ( luaProperty.get () == null )
@@ -45,11 +48,22 @@ public class Trigger
         validProperty.bind ( Bindings.isNotNull ( functionProperty ) );
     }
 
+    public Suite suite()
+    {
+        return suiteProperty.get ();
+    }
+
+    public Trigger suite ( Suite suite )
+    {
+        suiteProperty.set ( suite );
+        return this;
+    }
+    
     public Globals lua()
     {
         return luaProperty.get ();
     }
-
+    
     public Trigger lua ( Globals lua )
     {
         luaProperty.set ( lua );

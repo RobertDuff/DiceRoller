@@ -12,11 +12,28 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 
-public abstract class Group
+public class Group
 {
+    private ObjectProperty<Suite> suiteProperty = new SimpleObjectProperty<> ();
     private ObjectProperty<Globals> luaProperty = new SimpleObjectProperty<> ();
     protected StringProperty nameProperty = new SimpleStringProperty ();
     protected ListProperty<Roller> rollersProperty = new SimpleListProperty<> ( FXCollections.observableArrayList () );
+    
+    public Group()
+    {
+        suiteProperty.addListener ( ( a, o, n ) -> luaProperty.bind ( n.luaProperty () ) );
+    }
+    
+    public Suite suite()
+    {
+        return suiteProperty.get ();
+    }
+    
+    public Group suite ( Suite suite )
+    {
+        suiteProperty.set ( suite );
+        return this;
+    }
     
     public Globals lua()
     {
@@ -45,6 +62,11 @@ public abstract class Group
         return rollersProperty;
     }
     
+    public ObjectProperty<Suite> suiteProperty()
+    {
+        return suiteProperty;
+    }
+    
     public ObjectProperty<Globals> luaProperty()
     {
         return luaProperty;
@@ -59,7 +81,4 @@ public abstract class Group
     {
         return rollersProperty;
     }
-    
-    public abstract void addRoller ( Roller roller );    
-    public abstract Roller newRoller();
 }

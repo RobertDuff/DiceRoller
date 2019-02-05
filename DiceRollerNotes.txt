@@ -8,3 +8,46 @@ DicePattern:
 	N<<DiePattern>>			- N Dice.				(3d6, 2d4, 3d[ 3:4 6:7 ])
 	N:H<<DiePattern>> 		- Highest H of N Dice.	(4:3d6)
 	N:-L<<DicePattern>>		- Lowest L of N Dice.	(4:-3d6)
+
+	
+
+Model:
+
+	Suites:
+	
+		createSuite ( Name )
+		updateSuite ( Suite, Name )
+		deleteSuite ( Suite )
+		
+	Triggers:
+	
+		createTrigger ( Suite, Name, Def )
+		updateTrigger ( Trigger, Name, Def )
+		deleteSuite ( Trigger )
+		
+	Variables:
+	
+		updateVariables ( Suite, List<Variable> )
+		
+	Groups:
+	
+		createGroup ( Suite, Name )
+		updateSuite ( Group, Name )
+		moveGroup ( Group, pos )
+		deleteGroup ( Group )
+		
+	Rollers:
+	
+		createRoller ( Group, Name, Def )
+		updateRoller ( Roller, Name, Def )
+		moveRoller ( Roller, pos )
+		deleteRoller ( Roller )
+		
+	Labels:
+	
+		 updateLabels ( Roller, Map<Int,String )
+		 
+	RollerTriggers:
+	
+		updateRollerTriggers ( Roller, Set<Triggers> )
+		

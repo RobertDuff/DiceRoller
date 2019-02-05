@@ -1,7 +1,6 @@
 package duffrd.diceroller.model;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandles;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -12,51 +11,57 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.yaml.snakeyaml.Yaml;
 
 public class SuiteInitializer
 {
-    private static final Logger logger = LogManager.getLogger ( MethodHandles.lookup().lookupClass() );
-
     public static final String SUITES_DIRECTORY = "suites";
+    
+    private static Map<String,Map<String,Object>> templates;
 
-    private Map<String,Map<String,Object>> templates;
+    private Model model;
 
-    public SuiteInitializer ()
+    public SuiteInitializer ( Model model ) throws DiceRollerException
     {
-        templates = new HashMap<> ();
-
-        try
-        {
-
-            Files.walk ( Paths.get ( ClassLoader.getSystemResource ( SUITES_DIRECTORY ).toURI () ) )
-            .filter ( suitePath -> suitePath.getFileName ().toString ().endsWith ( ".yaml" ) )
-            .forEach ( suitePath -> 
-            {
-                try
-                {
-                    Map<String,Object> suiteSpec = new Yaml ().load ( Files.newInputStream ( suitePath, StandardOpenOption.READ ) );
-                    String suiteName = ( String ) suiteSpec.remove ( "suite" );
-                    templates.put ( suiteName, suiteSpec );
-                }
-                catch ( IOException e )
-                {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            } );
-        }
-        catch ( IOException | URISyntaxException e )
-        {
-            e.printStackTrace();
-            templates.clear ();
-        }
+        this.model = model;
+        
+        loadTemplates ();
     }
 
+    private static void loadTemplates() throws DiceRollerException
+    {
+        if ( templates == null )
+        {
+            templates = new HashMap<> ();
+
+            try
+            {
+
+                Files.walk ( Paths.get ( ClassLoader.getSystemResource ( SUITES_DIRECTORY ).toURI () ) )
+                .filter ( suitePath -> suitePath.getFileName ().toString ().endsWith ( ".yaml" ) )
+                .forEach ( suitePath -> 
+                {
+                    try
+                    {
+                        Map<String,Object> suiteSpec = new Yaml ().load ( Files.newInputStream ( suitePath, StandardOpenOption.READ ) );
+                        String suiteName = ( String ) suiteSpec.remove ( "suite" );
+                        templates.put ( suiteName, suiteSpec );
+                    }
+                    catch ( IOException e )
+                    {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                } );
+            }
+            catch ( IOException | URISyntaxException e )
+            {
+                throw new DiceRollerException ( e );
+            }
+        }
+    }
+    
     public List<String> suiteTemplates()
     {
         List<String> suiteNames = new ArrayList<> ( templates.keySet () );
@@ -64,40 +69,30 @@ public class SuiteInitializer
         return suiteNames;
     }
 
-    public void apply ( Suite suite, String templateName )
+    public void apply ( Suite suite, String templateName ) throws DiceRollerException
     {
         apply ( suite, templates.get ( templateName ) );
     }
     
     @SuppressWarnings ( "unchecked" )
-    public void apply ( Suite suite, Map<String,Object> spec )
+    public void apply ( Suite suite, Map<String,Object> spec ) throws DiceRollerException
     {
         //
         // Variables
         //
-
+        
         for ( Object o : ( List<Object> ) spec.getOrDefault ( "variables", Collections.emptyList () ) )
         {
-            Variable variable = suite.newVariable ();
-
             if ( o instanceof String )
-            {
-                variable.name ( o.toString () );
-                variable.value ( 0 );
-            }
+                model.createVariable ( suite, o.toString (), 0 );
             else if ( o instanceof Map )
             {                
                 Map<String,Integer> v = ( Map<String,Integer> ) o;
              
                 // Using a Loop, even though there should be only one value.
                 for ( String name : v.keySet () )
-                {
-                    variable.name ( name );
-                    variable.value ( v.get ( name ) );
-                }
+                    model.createVariable ( suite, name, v.get ( name ) );
             }
-            
-            suite.variablesProperty ().add ( variable );
         }
 
         //
@@ -105,60 +100,43 @@ public class SuiteInitializer
         //
 
         Map<String,String> triggers = ( Map<String,String> ) spec.getOrDefault ( "triggers", Collections.emptyMap () );
+
+        // This is an internal-only reference for finding triggers by name when building roller below.
+        Map<String,Trigger> triggerRefs = new HashMap<> ();
         
         for ( String name : triggers.keySet () )
         {
-            Trigger trigger = suite.newTrigger ();
-
-            trigger.name ( name );
-            trigger.definition ( triggers.get ( name ) );
-            
-            logger.debug ( "Adding Trigger " + name );
-            
-            suite.triggersProperty ().add ( trigger );
+            Trigger trigger = model.createTrigger ( suite, name, triggers.get ( name ) );
+            triggerRefs.put ( name, trigger );
         }
         
-        logger.debug ( "Suite Triggers: " + suite.triggersProperty ().stream ().map ( t -> t.name () ).collect ( Collectors.joining ( " " ) ) );
-
         //
         // Groups
         //
 
         for ( Map<String,Object> g : ( List<Map<String,Object>> ) spec.getOrDefault ( "groups", Collections.emptyList () ) )
         {
-            Group group = suite.newGroup ();
-
-            group.name ( ( String ) g.get ( "group" ) );
-            logger.debug ( "Assigning new Group Name: " + group.name () );
+            Group group = model.createGroup ( suite, ( String ) g.get ( "group" ) );
             
             for ( Map<String,Object> r : ( List<Map<String, Object>> ) g.getOrDefault ( "rollers", Collections.emptyList () ) )
             {
-                Roller roller = group.newRoller ();
+                Roller roller = model.createRoller ( group, ( String ) r.get ( "name" ), ( String ) r.get ( "definition" ) );
 
-                roller.name ( ( String ) r.get ( "name" ) );
-                roller.definition ( ( String ) r.get ( "definition" ) );
-
-                roller.labelsProperty ().putAll ( ( Map<Integer, String> ) r.getOrDefault ( "labels", Collections.emptyMap () ) );
+                Map<Integer,String> labels = ( Map<Integer,String> ) r.getOrDefault ( "labels", Collections.emptyMap () );
+                
+                for ( int value : labels.keySet () )
+                    model.createLabel ( roller, value, labels.get ( value ) );
 
                 for ( String t : ( List<String> ) r.getOrDefault ( "triggers", Collections.emptyList () ) )
                 {
-                    logger.debug ( "Looking for Trigger named: " + t );
-                    for ( Trigger trigger : suite.triggersProperty () )
-                    {
-                        logger.debug ( "Comparing " + t + " with " + trigger.name () );
-                        if ( trigger.name ().equals ( t ) )
-                        {
-                            logger.debug ( "Associating Roller " + roller.name () + " with Trigger " + trigger.name () );
-                            roller.triggersProperty ().add ( trigger );
-                            break;
-                        }
-                    }
+                    Trigger trigger = triggerRefs.get ( t );
+                    
+                    if ( trigger == null )
+                        throw new DiceRollerException ( "Roller '" + roller.name () + "' references undefined Trigger '" + t + "'" );
+
+                    model.createRollerTrigger ( roller, trigger );
                 }
-                
-                group.rollersProperty ().add ( roller );
             }
-            
-            suite.groupsProperty ().add ( group );
         }
     }
 }

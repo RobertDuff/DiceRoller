@@ -19,17 +19,39 @@
                 </Menu>
                 <Menu mnemonicParsing="false" text="Edit">
                   <items>
-                        <MenuItem fx:id="newRollerItem" mnemonicParsing="false" text="New Roller" />
-                        <MenuItem fx:id="editRollerItem" mnemonicParsing="false" text="Edit Roller" />
-                    <MenuItem fx:id="deleteRollerItem" mnemonicParsing="false" text="Delete Roller" />
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="newGroupItem" mnemonicParsing="false" text="New Group" />
-                        <MenuItem fx:id="renameGroupItem" mnemonicParsing="false" text="Rename Group" />
-                        <MenuItem fx:id="deleteGroupItem" mnemonicParsing="false" text="Delete Group" />
-                        <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem fx:id="newSuiteMenuItem" mnemonicParsing="false" text="New Suite" />
-                        <MenuItem fx:id="renameSuiteMenuItem" mnemonicParsing="false" text="Rename Suite" />
-                        <MenuItem fx:id="deleteSuiteMenuItem" mnemonicParsing="false" text="Delete Suite" />
+                        <Menu mnemonicParsing="false" text="Rollers">
+                          <items>
+                              <MenuItem fx:id="newRollerItem" mnemonicParsing="false" text="New Roller" />
+                              <MenuItem fx:id="editRollerItem" mnemonicParsing="false" text="Edit Roller" />
+                          <MenuItem fx:id="deleteRollerItem" mnemonicParsing="false" text="Delete Roller" />
+                          </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Groups">
+                          <items>
+                              <MenuItem fx:id="newGroupItem" mnemonicParsing="false" text="New Group" />
+                              <MenuItem fx:id="renameGroupItem" mnemonicParsing="false" text="Rename Group" />
+                              <MenuItem fx:id="deleteGroupItem" mnemonicParsing="false" text="Delete Group" />
+                          </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Variables">
+                          <items>
+                              <MenuItem fx:id="editVariablesMenuItem" mnemonicParsing="false" text="Edit Variables" />
+                          </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Triggers">
+                           <items>
+                              <MenuItem fx:id="newTriggerMenuItem" mnemonicParsing="false" text="New Trigger" />
+                              <MenuItem fx:id="editTriggerMenuItem" mnemonicParsing="false" text="Edit Trigger" />
+                              <MenuItem fx:id="deleteTriggerMenuItem" mnemonicParsing="false" text="Delete Trigger" />
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Suites">
+                           <items>
+                              <MenuItem fx:id="newSuiteMenuItem" mnemonicParsing="false" text="New Suite" />
+                              <MenuItem fx:id="renameSuiteMenuItem" mnemonicParsing="false" text="Rename Suite" />
+                              <MenuItem fx:id="deleteSuiteMenuItem" mnemonicParsing="false" text="Delete Suite" />
+                           </items>
+                        </Menu>
                   </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">

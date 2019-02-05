@@ -19,7 +19,7 @@ create table variables
 create trigger applySquenceToNewVariable after insert on variables
 when new.sequence is null
 begin
-	update variables set sequence = ( select ifnull ( max ( sequence ), 0 ) + 1 from variables where suiteId=new.suiteId ) where suiteId=new.suiteId and name=new.name;
+	update variables set sequence = ( select ifnull ( max ( sequence ), 0 ) + 1 from variables where suiteId=new.suiteId ) where id=new.id;
 end;
 
 create trigger resequenceVariablesOnDelete after delete on variables
@@ -48,12 +48,12 @@ create table groups
 create trigger applySequenceToNewGroup after insert on groups
 when new.sequence is null
 begin
-	update groups set sequence = ( select ifnull ( max ( sequence ), 0 ) + 1 from groups ) where id=new.id;
+	update groups set sequence = ( select ifnull ( max ( sequence ), 0 ) + 1 from groups where suiteId=new.suiteId ) where id=new.id;
 end;
 
 create trigger resequenceGroupsOnDelete after delete on groups
 begin
-	update groups set sequence = sequence - 1 where sequence > old.sequence;
+	update groups set sequence = sequence - 1 where suiteId = old.suiteId and sequence > old.sequence;
 end;
 
 create table rollers

@@ -14,6 +14,7 @@ import javafx.beans.property.StringProperty;
 
 public class Variable
 {
+    private ObjectProperty<Suite> suiteProperty = new SimpleObjectProperty<> ();
     private ObjectProperty<Globals> luaProperty = new SimpleObjectProperty<> ();
     protected StringProperty nameProperty = new SimpleStringProperty ();
     protected IntegerProperty valueProperty = new SimpleIntegerProperty ();
@@ -22,6 +23,8 @@ public class Variable
     
     public Variable ()
     {
+        suiteProperty.addListener ( ( a, o, n ) -> luaProperty.bind ( n.luaProperty () ) );
+        
         nameProperty.addListener ( ( object, oldValue, newValue ) -> 
         {
             if ( luaProperty.get () == null )
@@ -45,6 +48,17 @@ public class Variable
             
             return null;
         }, luaProperty, nameProperty, valueProperty );
+    }
+    
+    public Suite suite()
+    {
+        return suiteProperty.get ();
+    }
+    
+    public Variable suite ( Suite suite )
+    {
+        suiteProperty.set ( suite );
+        return this;
     }
     
     public Globals lua()

@@ -86,7 +86,7 @@ public class ProbabilityController implements Initializable
         }
         catch ( IOException e1 )
         {
-            e1.printStackTrace();
+            new ExceptionAlert ( "Calculating Probabilities", e1 ).showAndWait ();
         }        
     }
     

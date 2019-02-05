@@ -47,6 +47,7 @@ public class Roller
 
     static Random random = new Random();
 
+    private ObjectProperty<Group> groupProperty = new SimpleObjectProperty<> ();
     private ObjectProperty<Globals> luaProperty = new SimpleObjectProperty<> ();
     protected StringProperty nameProperty = new SimpleStringProperty ();
     protected StringProperty definitionProperty = new SimpleStringProperty ();
@@ -68,8 +69,21 @@ public class Roller
 
     public Roller()
     {
+        groupProperty.addListener ( ( a, o, n ) -> luaProperty.bind ( n.luaProperty () ) );
+
         functionProperty.bind ( Bindings.createObjectBinding ( () -> parseDefinition (), luaProperty, definitionProperty ) );
         validProperty.bind ( Bindings.isNotNull ( functionProperty ) );
+    }
+    
+    public Group group()
+    {
+        return groupProperty.get ();
+    }
+    
+    public Roller group ( Group group )
+    {
+        groupProperty.set ( group );
+        return this;
     }
     
     public Globals lua()
@@ -444,6 +458,7 @@ public class Roller
         }
         catch ( LuaError e )
         {
+            //TODO: Handle This
             logger.error ( "Lua Invalid: " + functionCode );
             return null;
         }

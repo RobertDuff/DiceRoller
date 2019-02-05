@@ -6,11 +6,9 @@ import java.util.Optional;
 
 import org.luaj.vm2.Globals;
 
-import duffrd.diceroller.model.Group;
 import duffrd.diceroller.model.Roller;
 import duffrd.diceroller.model.Suite;
 import duffrd.diceroller.model.Trigger;
-import duffrd.diceroller.model.Variable;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -34,11 +32,11 @@ public class RollerWizardTest extends Application
         {            
             RollerWizard wizard = new RollerWizard ( testSuite() );
             
-            Optional<ButtonType> result = wizard.showAndWait ();
+            Optional<ButtonType> result = wizard.cast ();
             
             if ( result.isPresent () && result.get () == ButtonType.FINISH )
             {
-                Roller roller = wizard.roller ();
+                Roller roller = wizard.product ();
                 
                 Iterator<Entry<Integer,String>> x = roller.labels ().entrySet ().iterator ();
                 
@@ -74,14 +72,9 @@ public class RollerWizardTest extends Application
     {
         Globals lua = LuaProvider.newLua ();
         
-        Suite suite = new Suite()
-        {
-            @Override public Variable newVariable () { return null; }
-            @Override public Trigger  newTrigger  () { return null; }
-            @Override public Group    newGroup    () { return null; }
-        };
-        
+        Suite suite = new Suite();
         suite.lua ( lua );
+        
         suite.triggers ().add ( new Trigger().lua ( lua ).name ( ">1" ).definition ( "A>1" ) );
         suite.triggers ().add ( new Trigger().lua ( lua ).name ( ">2" ).definition ( "A>2" ) );
         suite.triggers ().add ( new Trigger().lua ( lua ).name ( ">3" ).definition ( "A>3" ) );

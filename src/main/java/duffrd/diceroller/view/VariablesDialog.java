@@ -1,14 +1,13 @@
 package duffrd.diceroller.view;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import org.fxmisc.easybind.EasyBind;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 
 import duffrd.diceroller.model.Suite;
 import duffrd.diceroller.model.Variable;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
@@ -29,88 +28,89 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.util.converter.IntegerStringConverter;
-import utility.arrays.ListRearranger;
+import utility.collections.ListRearranger;
 
 public class VariablesDialog extends Dialog<ButtonType>
 {    
     public class VariableNode extends HBox
     {
-        private ObjectProperty<Variable> variable = new SimpleObjectProperty<> ();
         private Label nameLabel = new Label();
         private TextField valueField = new TextField();
         
-        public VariableNode()
-        {            
-            variable.addListener ( ( object, oldValue, newValue ) -> 
+        public VariableNode ( String name, int value )
+        {                        
+            UnaryOperator<TextFormatter.Change> filter = change ->
             {
-                nameLabel.textProperty ().unbind ();
-                
-                if ( newValue != null )
+                if ( change.isAdded () )
                 {
-                    nameLabel.textProperty ().bind ( newValue.nameProperty () );
-                    valueField.setText ( String.valueOf ( newValue.value () ) );
+                    String text = change.getText ();
+                    String editedText = text.replaceAll ( "[^0-9-]", "" );
+                    change.setText ( editedText );
                 }
-            } );
+                
+                return change;
+            };
             
-            valueField.setTextFormatter ( new TextFormatter<> ( new IntegerStringConverter() ) );
-            valueField.textProperty ().addListener ( ( object, oldValue, newValue ) -> 
-            {
-                variable.getValue ().valueProperty ().setValue ( Integer.valueOf ( newValue ) );
-            } );
+            valueField.setTextFormatter ( new TextFormatter<> ( new IntegerStringConverter (), 0, filter ) );
             
             Region spacing = new Region();
             getChildren ().addAll ( nameLabel, spacing, valueField );
             setHgrow ( spacing, Priority.ALWAYS );
 
-            setOnContextMenuRequested ( event ->
-            {
-                event.consume ();
-
-                ContextMenu menu = new ContextMenu ();
-
-                MenuItem delete = new MenuItem ();
-                delete.setText ( "Delete Variable \"" + variable.getValue ().name () + "\"" );
-                delete.setOnAction ( a -> varList.getItems ().remove ( ( ( VariableNode ) event.getSource () ).variable () ) );
-
-                menu.getItems ().add ( delete );
-                menu.show ( ( Node ) event.getSource (), event.getScreenX (), event.getScreenY () );
-            } );
+            nameLabel.setText ( name );
+            valueField.setText ( String.valueOf ( value ) );
         }
         
         public String name()
         {
-            return variable.getValue ().name ();
+            return nameLabel.getText ();
+        }
+        
+        public void rename()
+        {
+            TextInputDialog nameDialog = new TextInputDialog ();
+            nameDialog.setTitle ( "Rename Variable: " + nameLabel.getText () );
+            nameDialog.setHeaderText ( "Enter the new name for the variable." );
+            nameDialog.setContentText ( "Variable Name:" );
+            
+            Optional<String> result = nameDialog.showAndWait ();
+            
+            if ( result.isPresent () && !result.get ().isEmpty () )
+                nameLabel.setText ( result.get () );
         }
         
         public int value()
         {
-            return variable.getValue ().value ();
-        }
-        
-        public Variable variable()
-        {
-            return variable.get ();
-        }
-        
-        public VariableNode variable ( Variable var )
-        {
-            variableProperty ().set ( var );
-            return this;
-        }
-        
-        public ObjectProperty<Variable> variableProperty()
-        {
-            return variable;
-        }
+            return Integer.valueOf ( valueField.getText () );
+        }        
     }
 
-    public class VarCell extends ListCell<Variable>
-    {
-        private VariableNode node = new VariableNode ();
-        
+    public class VarCell extends ListCell<VariableNode>
+    {        
         public VarCell ()
         {
             super ();
+
+            setOnContextMenuRequested ( event ->
+            {
+                if ( getItem() == null )
+                    return;
+                
+                event.consume ();
+
+                ContextMenu menu = new ContextMenu ();
+
+                MenuItem rename = new MenuItem ();
+                rename.setText ( "Rename Variable \"" + getItem().name () + "\"" );
+                rename.setOnAction ( a -> getItem().rename() );
+
+                MenuItem delete = new MenuItem ();
+                delete.setText ( "Delete Variable \"" + getItem().name () + "\"" );
+                delete.setOnAction ( a -> getListView ().getItems ().remove ( getItem () ) );
+
+                menu.getItems ().addAll ( rename, delete );
+                menu.show ( ( Node ) event.getSource (), event.getScreenX (), event.getScreenY () );
+            } );
 
             setOnDragDetected ( event ->
             {                
@@ -158,7 +158,7 @@ public class VariablesDialog extends Dialog<ButtonType>
 
                 if ( dragboard.hasString () )
                 {                    
-                    List<Variable> items = getListView ().getItems ();
+                    List<VariableNode> items = getListView ().getItems ();
                     
                     VarCell source = ( VarCell ) event.getGestureSource ();
                     VarCell target = ( VarCell ) event.getGestureTarget ();
@@ -166,7 +166,6 @@ public class VariablesDialog extends Dialog<ButtonType>
                     int from = items.indexOf ( source.getItem () );
                     int to = items.indexOf ( target.getItem () );
                     
-                    FXCollections.sort ( suite.variablesProperty ().getValue (), ListRearranger.move ( suite.variables (), from, to ) );
                     FXCollections.sort ( getListView().itemsProperty ().getValue (), ListRearranger.move ( getListView().getItems (), from, to ) );
                     
                     success = true;
@@ -180,7 +179,7 @@ public class VariablesDialog extends Dialog<ButtonType>
         }
 
         @Override
-        protected void updateItem ( Variable item, boolean empty )
+        protected void updateItem ( VariableNode item, boolean empty )
         {
             super.updateItem ( item, empty );
             
@@ -191,24 +190,20 @@ public class VariablesDialog extends Dialog<ButtonType>
                 return;
             }
 
-            node.variable ( item );
-            setGraphic ( node );
+            setGraphic ( item );
         }     
     }
 
-    private Suite suite;
-    ListView<Variable> varList;
+    ListView<VariableNode> varList;
 
     public VariablesDialog ( Suite suite )
-    {        
-        this.suite = suite;
-        
+    {                
         setResizable ( true );
         getDialogPane().setPrefWidth ( 400 );
 
         varList = new ListView<>();
         varList.setCellFactory ( param -> new VarCell() );
-        EasyBind.listBind ( varList.getItems(), suite.variablesProperty () );
+        varList.getItems ().addAll ( suite.variables ().stream ().map ( v -> new VariableNode ( v.name (), v.value () ) ).collect ( Collectors.toList () ) );
 
         setTitle ( "Edit Variables: " + suite.name () );
         setHeaderText ( "Add, Edit, or Delete Suite Variables" );
@@ -233,10 +228,8 @@ public class VariablesDialog extends Dialog<ButtonType>
 
                 Optional<String> name = dialog.showAndWait ();
 
-                if ( !name.isPresent () )
-                    return;
-
-                varList.getItems ().add ( suite.newVariable () );   
+                if ( name.isPresent () && !name.get ().isEmpty () )
+                    varList.getItems ().add ( new VariableNode ( name.get (), 0 ) );   
             } );
 
             menu.getItems ().addAll ( newVar );
@@ -244,5 +237,15 @@ public class VariablesDialog extends Dialog<ButtonType>
         } );
 
         getDialogPane ().setContent ( varList );
+    }
+    
+    public List<Variable> variables()
+    {        
+        List<Variable> variables = new ArrayList<>();
+        
+        for ( VariableNode node : varList.getItems () )
+            variables.add ( new Variable().name ( node.name () ).value ( node.value () ) );
+
+        return variables;
     }
 }

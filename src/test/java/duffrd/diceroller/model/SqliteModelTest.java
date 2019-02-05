@@ -13,7 +13,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,9 +27,12 @@ import org.junit.rules.ExpectedException;
 import org.yaml.snakeyaml.Yaml;
 
 import duffrd.diceroller.model.sqlite.SqliteDbProvider;
+import duffrd.diceroller.model.sqlite.SqliteGroup;
 import duffrd.diceroller.model.sqlite.SqliteModelLoader;
-import javafx.collections.FXCollections;
-import utility.arrays.ListRearranger;
+import duffrd.diceroller.model.sqlite.SqliteRoller;
+import duffrd.diceroller.model.sqlite.SqliteSuite;
+import duffrd.diceroller.model.sqlite.SqliteTrigger;
+import utility.collections.SetOperations;
 import utility.sql.Sql;
 
 public class SqliteModelTest
@@ -41,7 +45,7 @@ public class SqliteModelTest
     public Connection db;
     public ModelLoader loader;
     public Model model;
-    public Suite suite;
+    public SqliteSuite suite;
     
     @Before
     public void before() throws IOException, SQLException, DiceRollerException
@@ -52,13 +56,13 @@ public class SqliteModelTest
         
         Map<String,Object> suiteSpec = new Yaml ().load ( ClassLoader.getSystemResourceAsStream ( TEST_DATA ) );
         
-        suite = model.newSuite ();
-        suite.name ( suiteSpec.get ( "suite" ).toString () );
+        suite = ( SqliteSuite ) model.createSuite ( suiteSpec.get ( "suite" ).toString () );
         
-        SuiteInitializer suiteInitializer = new SuiteInitializer ();
+        SuiteInitializer suiteInitializer = new SuiteInitializer ( model );
         suiteInitializer.apply ( suite, suiteSpec );  
         
-        model.suites ().add ( suite );
+        model = loader.load ();
+        suite = ( SqliteSuite ) model.suites().iterator ().next ();
     }
     
     @After
@@ -187,8 +191,9 @@ public class SqliteModelTest
         //
         
         n = 0;
+        
         for ( ResultSet row : new Sql ( db, "select * from groups order by sequence" ).go() )
-        {            
+        {    
             n++;
             
             ResultSetMetaData data = row.getMetaData ();
@@ -213,7 +218,7 @@ public class SqliteModelTest
             assertEquals ( n, row.getInt ( 4 ) );
         }
         
-        assertEquals ( "Exactly 3 Groups", 3, n );
+        assertEquals ( "Exactly 7 Groups", 7, n );
         
         //
         // Rollers
@@ -313,6 +318,7 @@ public class SqliteModelTest
         assertEquals ( 1, model.suites ().size () );
                 
         assertEquals ( "S1", suite.name() );
+        assertEquals ( model, suite.model () );
         
         // Variables
         
@@ -324,6 +330,7 @@ public class SqliteModelTest
             assertEquals ( "V" + n, v.name () );
             assertEquals ( n * 10, v.value () );
             assertEquals ( n * 10, v.lua ().get ( "V" + n ).toint () );
+            assertEquals ( suite, v.suite () );
             n++;
         }
         
@@ -344,6 +351,7 @@ public class SqliteModelTest
             assertEquals ( "T" + n, trigger.name () );
             assertEquals ( "A == " + n, trigger.definition () );
             assertTrue ( trigger.isValid () );
+            assertEquals ( suite, trigger.suite () );
             n++;
         }
         
@@ -351,13 +359,14 @@ public class SqliteModelTest
         
         // Groups
         
-        assertEquals ( 3, suite.groups ().size () );
+        assertEquals ( 7, suite.groups ().size () );
         
         for ( int g=0; g < suite.groups ().size (); g++ )
         {
             Group group = suite.groups ().get ( g );
             
             assertEquals ( "G" + ( g+1 ), group.name () );
+            assertEquals ( suite, group.suite () );
             
             if ( g == 0 )
             {
@@ -370,6 +379,7 @@ public class SqliteModelTest
                     assertEquals ( "R" + ( r+1 ), roller.name () );
                     assertEquals ( "d4", roller.definition () );
                     assertTrue ( roller.isValid () );
+                    assertEquals ( group, roller.group () );
                     
                     if ( r == 0 )
                     {
@@ -400,46 +410,28 @@ public class SqliteModelTest
     }
     
     @Test
-    public void testCreateSuite() throws SQLException
+    public void testCreateSuite() throws SQLException, DiceRollerException
     {
-        Suite suite = model.newSuite ();
+        Suite suite = model.createSuite ( "S2" );
         
-        assertNotNull ( suite.lua () );
-        
-        suite.name ( "S2" );
-        
+        assertNotNull ( suite.lua () );        
         assertEquals ( "S2", new Sql ( db, "select name from suites where id = ( select max ( id ) from suites )" ).go ().single ().getString ( 1 ) );
     }
     
     @Test
-    public void testRenameSuite() throws SQLException
+    public void testUpdateSuite() throws SQLException, DiceRollerException
     {
-        // Rename
+        model.updateSuite ( suite, "S2" );
         
-        suite.name ( "S2" );
+        assertEquals ( "S2", suite.name () );
+        
         assertEquals ( "S2", new Sql ( db, "select name from suites" ).go ().single ().getString ( 1 ) );
-        
-        // Rename to Blank Value        
-        
-        suite.name ( "" );
-        assertEquals ( "<unnamed-suite>", new Sql ( db, "select name from suites" ).go ().single ().getString ( 1 ) );
-        
-        // Rename 
-        
-        suite.name ( "S3" );
-        assertEquals ( "S3", new Sql ( db, "select name from suites" ).go ().single ().getString ( 1 ) );
-        
-        // Rename to Null
-        
-        suite.name ( null );
-        assertEquals ( "<unnamed-suite>", new Sql ( db, "select name from suites" ).go ().single ().getString ( 1 ) );
-        
     }
     
     @Test
-    public void testDeleteSuite() throws SQLException
+    public void testDeleteSuite() throws SQLException, DiceRollerException
     {
-        model.suites ().remove ( suite );
+        model.deleteSuite ( suite );
         
         assertEquals ( 0, model.suites ().size () );
 
@@ -453,14 +445,11 @@ public class SqliteModelTest
     }
     
     @Test
-    public void testCreateVariable() throws SQLException
+    public void testCreateVariable() throws SQLException, DiceRollerException
     {
-        Variable v = suite.newVariable ();
+        Variable v = model.createVariable ( suite, "VN", 67 );
         
         assertNotNull ( v.lua () );
-        
-        v.name ( "VN" );
-        v.value ( 67 );
         
         ResultSet row = new Sql ( db, "select suiteId,name,value,sequence from variables where id = ( select max ( id ) from variables )" ).go ().single ();
         
@@ -471,179 +460,94 @@ public class SqliteModelTest
     }
     
     @Test
-    public void testRenameVariable() throws SQLException
+    public void testUpdateVariables() throws SQLException, DiceRollerException
     {
-        Variable variable = suite.variables ().get ( 0 );
-        variable.value ( 12 );
+        List<Variable> variables = new ArrayList<>();
         
-        // Rename
+        variables.add ( new Variable().name ( "V10" ).value ( 10 ) );
+        variables.add ( new Variable().name ( "V11" ).value ( 11 ) );
+        variables.add ( new Variable().name ( "V12" ).value ( 12 ) );
         
-        variable.name ( "VR" );
-        assertEquals ( "VR", new Sql ( db, "select name from variables where id = 1" ).go ().single ().getString ( 1 ) );
-        assertTrue ( variable.lua ().get ( "V0" ).isnil () );
-        assertEquals ( 12, variable.lua ().get ( "VR" ).checkint () );
+        model.updateVariables ( suite, variables );
         
-        // Rename to Blank
+        assertEquals ( 3, suite.variables ().size () );
+     
+        int n = 10;
         
-        variable.name ( "" );
-        assertEquals ( "<unnamed-variable>", new Sql ( db, "select name from variables where id = 1" ).go ().single ().getString ( 1 ) );
-        assertTrue ( variable.lua ().get ( "VR" ).isnil () );
-
-        // Rename 
+        for ( Variable variable : suite.variables () )
+        {
+            assertNotNull ( variable.lua () );
+            assertEquals ( "V" + n, variable.name () );
+            assertEquals ( n++, variable.value () );
+        }
         
-        variable.name ( "VRR" );
-        assertEquals ( "VRR", new Sql ( db, "select name from variables where id = 1" ).go ().single ().getString ( 1 ) );
-        assertEquals ( 12, variable.lua ().get ( "VRR" ).checkint () );
-
-        // Rename to Null
-        
-        variable.name ( null );
-        assertEquals ( "<unnamed-variable>", new Sql ( db, "select name from variables where id = 1" ).go ().single ().getString ( 1 ) );
-        assertTrue ( variable.lua ().get ( "VRR" ).isnil () );
-    }
-    
-    @Test
-    public void testChangeVariableValue() throws SQLException
-    {
-        Variable variable = suite.variables ().get ( 0 );
-        
-        variable.value ( 77 );
-        assertEquals ( 77, new Sql ( db, "select value from variables where id = 1" ).go ().single ().getInt ( 1 ) );
-        assertEquals ( 77, variable.lua ().get ( "V0" ).toint () );
-    }
-    
-    @Test
-    public void testRearrangeVariables() throws SQLException
-    {
-        FXCollections.sort ( suite.variablesProperty().getValue (), ListRearranger.reverse ( suite.variables () ) );
-        
-        int n = 5;
+        n = 10;
         int s = 1;
         
-        for ( ResultSet row : new Sql ( db, "select name,sequence from variables order by sequence" ).go () )
+        for ( ResultSet row : new Sql ( db, "select suiteId,name,value,sequence from variables where suiteId=?" ).go ( suite.id () ) )
         {
-            assertEquals ( "V" + n, row.getString ( 1 ) );
-            assertEquals ( s, row.getInt ( 2 ) );
-            
-            n--;
-            s++;
+            assertEquals ( 1, row.getInt ( 1 ) );
+            assertEquals ( "V" + n, row.getString ( 2 ) );
+            assertEquals ( n++, row.getInt ( 3 ) );
+            assertEquals ( s++, row.getInt ( 4 ) );
         }
     }
     
     @Test
-    public void testDeleteVariable() throws SQLException
+    public void testDeleteAllVariables() throws SQLException, DiceRollerException
     {
-        suite.variables ().remove ( 0 );
+        model.updateVariables ( suite, Collections.emptyList () );
         
-        assertEquals ( 5, new Sql ( db, "select count (*) from variables" ).go ().single ().getInt ( 1 ) );
-        
-        int n = 1;
-        for ( ResultSet row : new Sql ( db, "select name,sequence from variables" ).go () )
-        {
-            assertEquals ( "V" + n, row.getString ( 1 ) );
-            assertEquals ( n, row.getInt ( 2 ) );
-            n++;
-        }
-    }
-    
-    @Test
-    public void testDeleteAllVariables() throws SQLException
-    {
-        suite.variables ().clear();
+        assertEquals ( 0, suite.variables ().size () );
         
         assertEquals ( 0, new Sql ( db, "select count (*) from variables" ).go ().single ().getInt ( 1 ) );
     }
     
     @Test
-    public void testCreateTrigger() throws SQLException
+    public void testCreateTrigger() throws SQLException, DiceRollerException
     {
-        Trigger trigger = suite.newTrigger ();
+        SqliteTrigger trigger = ( SqliteTrigger ) model.createTrigger ( suite, "T3", "A==1" );
         
-        trigger.name ( "T3" );
+        assertTrue ( suite.triggersProperty.contains ( trigger ) );
+        assertNotNull ( trigger.lua () );
+        assertEquals ( "T3", trigger.name () );
+        assertEquals ( "A==1", trigger.definition () );
+        assertTrue ( trigger.isValid () );
         
-        ResultSet row = new Sql ( db, "select suiteId,name from triggers where id = ( select max ( id ) from triggers )" ).go ().single ();
+        ResultSet row = new Sql ( db, "select suiteId,name,definition from triggers where id=?" ).go ( trigger.id() ).single ();
         
         assertEquals ( 1, row.getInt ( 1 ) );
         assertEquals ( "T3", row.getString ( 2 ) );
+        assertEquals ( "A==1", row.getString ( 3 ) );
     }
     
     @Test
-    public void testRenameTrigger() throws SQLException
+    public void testUpdateTrigger() throws SQLException, DiceRollerException
     {
-        Trigger trigger = null;
-        Iterator<Trigger> i = suite.triggers ().iterator ();
+        SqliteTrigger trigger = ( SqliteTrigger ) SetOperations.findAny ( suite.triggers (), t -> t.name ().equals ( "T1" ) );
         
-        while ( i.hasNext () )
-        {
-            trigger = i.next ();
-            
-            if ( trigger.name ().equals ( "T1" ) )
-                break;
-        }
-        
-        // Rename
-        
-        trigger.name ( "TR" );
-        assertEquals ( "TR", new Sql ( db, "select name from triggers where id = 1" ).go ().single ().getString ( 1 ) );
-        
-        // Rename to Blank
-        
-        trigger.name ( "" );
-        assertEquals ( "<unnamed-trigger>", new Sql ( db, "select name from triggers where id = 1" ).go ().single ().getString ( 1 ) );
+        assertNotNull ( trigger );
 
-        // Rename 
+        model.updateTrigger ( trigger, "TR", "OUTCOME==34" );
         
-        trigger.name ( "TRR" );
-        assertEquals ( "TRR", new Sql ( db, "select name from triggers where id = 1" ).go ().single ().getString ( 1 ) );
-
-        // Rename to Null
-        
-        trigger.name ( null );
-        assertEquals ( "<unnamed-trigger>", new Sql ( db, "select name from triggers where id = 1" ).go ().single ().getString ( 1 ) );
-    }
-    
-    @Test
-    public void testChangeTriggerDefinition() throws SQLException
-    {
-        Trigger trigger = null;
-        Iterator<Trigger> i = suite.triggers ().iterator ();
-        
-        while ( i.hasNext () )
-        {
-            trigger = i.next ();
-            
-            if ( trigger.name ().equals ( "T1" ) )
-                break;
-        }
-        
-        trigger.definition ( "OUTCOME > 10" );
-        assertEquals ( "OUTCOME > 10", new Sql ( db, "select definition from triggers where id = 1" ).go ().single ().getString ( 1 ) );
+        assertEquals ( "TR", trigger.name () );
+        assertEquals ( "OUTCOME==34", trigger.definition () );
         assertTrue ( trigger.isValid () );
         
-        trigger.definition ( "0" );
-        assertEquals ( "0", new Sql ( db, "select definition from triggers where id = 1" ).go ().single ().getString ( 1 ) );
-        assertTrue ( trigger.isValid () );
-        
-        trigger.definition ( "FRED==" );
-        assertEquals ( "FRED==", new Sql ( db, "select definition from triggers where id = 1" ).go ().single ().getString ( 1 ) );
-        assertFalse ( trigger.isValid () );
+        ResultSet row = new Sql ( db, "select name,definition from triggers where id=?" ).go ( trigger.id () ).single ();
+        assertEquals ( "TR", row.getString ( 1 ) );
+        assertEquals ( "OUTCOME==34", row.getString ( 2 ) );
     }
     
     @Test
-    public void testDeleteTrigger() throws SQLException
+    public void testDeleteTrigger() throws SQLException, DiceRollerException
     {
-        Trigger trigger = null;
-        Iterator<Trigger> i = suite.triggers ().iterator ();
+        SqliteTrigger trigger = ( SqliteTrigger ) SetOperations.findAny ( suite.triggers(), t -> t.name ().equals ( "T1" ) );
+
+        model.deleteTrigger ( trigger );
         
-        while ( i.hasNext () )
-        {
-            trigger = i.next ();
-            
-            if ( trigger.name ().equals ( "T1" ) )
-                break;
-        }
-                
-        suite.triggers ().remove ( trigger );
+        assertEquals ( 1, suite.triggers().size () );
+        assertFalse ( suite.triggers ().contains ( trigger ) );
         
         assertEquals ( 1, new Sql ( db, "select count (*) from triggers" ).go ().single ().getInt ( 1 ) );
         assertEquals ( "T2", new Sql ( db, "select name from triggers" ).go ().single ().getString ( 1 ) );
@@ -657,254 +561,294 @@ public class SqliteModelTest
     }
     
     @Test
-    public void testDeleteAllTriggers() throws SQLException
+    public void testCreateGroup() throws SQLException, DiceRollerException
     {
-        suite.triggers ().clear();
+        SqliteGroup group = ( SqliteGroup ) model.createGroup ( suite, "GN" );
         
-        assertEquals ( 0, new Sql ( db, "select count (*) from triggers" ).go ().single ().getInt ( 1 ) );
-    }
-    
-    @Test
-    public void testCreateGroup() throws SQLException
-    {
-        Group group = suite.newGroup ();
+        assertTrue ( suite.groups ().contains ( group ) );
         
         assertNotNull ( group.lua () );
-        
-        group.name ( "GN" );
+        assertEquals ( "GN", group.name () );
         
         ResultSet row = new Sql ( db, "select suiteId,name,sequence from groups where id = ( select max ( id ) from groups )" ).go ().single ();
         
         assertEquals ( 1, row.getInt ( 1 ) );
         assertEquals ( "GN", row.getString ( 2 ) );
-        assertEquals ( 4, row.getInt ( 3 ) );
+        assertEquals ( 8, row.getInt ( 3 ) );
     }
     
     @Test
-    public void testRenameGroup() throws SQLException
+    public void testUpdateGroup() throws SQLException, DiceRollerException
     {
-        Group group = suite.groups ().get ( 0 );
-        
-        // Rename
-        
-        group.name ( "GR" );
-        assertEquals ( "GR", new Sql ( db, "select name from groups where id = 1" ).go ().single ().getString ( 1 ) );
-        
-        // Rename to Blank
-        
-        group.name ( "" );
-        assertEquals ( "<unnamed-group>", new Sql ( db, "select name from groups where id = 1" ).go ().single ().getString ( 1 ) );
+        SqliteGroup group = ( SqliteGroup ) suite.groups ().get ( 0 );
 
-        // Rename 
+        model.updateGroup ( group, "GN" );
         
-        group.name ( "GRR" );
-        assertEquals ( "GRR", new Sql ( db, "select name from groups where id = 1" ).go ().single ().getString ( 1 ) );
+        assertEquals ( "GN", group.name () );
+        
+        assertEquals ( "GN", new Sql ( db, "select name from groups where id=?" ).go ( group.id () ).single ().getString ( 1 ) );
+    }
+    
+    @Test
+    public void testMoveGroup() throws SQLException, DiceRollerException
+    {        
+        // Move First Down 1
+        model.moveGroup ( suite.groups ().get ( 0 ), 2 );
+        assertGroupOrder ( 2, 1, 3, 4, 5, 6, 7 );
+        
+        // Move First Down 2
+        model.moveGroup ( suite.groups ().get ( 0 ), 3 );
+        assertGroupOrder ( 1, 3, 2, 4, 5, 6, 7 );
+        
+        // Move First to Last
+        model.moveGroup ( suite.groups ().get ( 0 ), 7 );
+        assertGroupOrder ( 3, 2, 4, 5, 6, 7, 1 );
+        
+        // Move Last Up 1
+        model.moveGroup ( suite.groups ().get ( 6 ), 6 );
+        assertGroupOrder ( 3, 2, 4, 5, 6, 1, 7 );
+        
+        // Move Last Up 2
+        model.moveGroup ( suite.groups ().get ( 6 ), 5 );
+        assertGroupOrder ( 3, 2, 4, 5, 7, 6, 1 );
+        
+        // Move Last to First
+        model.moveGroup ( suite.groups ().get ( 6 ), 1 );
+        assertGroupOrder ( 1, 3, 2, 4, 5, 7, 6 );
+        
+        // Move Middle Up 1
+        model.moveGroup ( suite.groups ().get ( 3 ), 3 );
+        assertGroupOrder ( 1, 3, 4, 2, 5, 7, 6 );
+        
+        // Move Middle Up 2
+        model.moveGroup ( suite.groups ().get ( 3 ), 2 );
+        assertGroupOrder ( 1, 2, 3, 4, 5, 7, 6 );
+        
+        // Move Middle To First
+        model.moveGroup ( suite.groups ().get ( 3 ), 1 );
+        assertGroupOrder ( 4, 1, 2, 3, 5, 7, 6 );
+        
+        // Move Middle Down 1
+        model.moveGroup ( suite.groups ().get ( 3 ), 5 );
+        assertGroupOrder ( 4, 1, 2, 5, 3, 7, 6 );
+        
+        // Move Middle Down 2
+        model.moveGroup ( suite.groups ().get ( 3 ), 6 );
+        assertGroupOrder ( 4, 1, 2, 3, 7, 5, 6 );
+        
+        // Move Middle To Last
+        model.moveGroup ( suite.groups ().get ( 3 ), 7 );
+        assertGroupOrder ( 4, 1, 2, 7, 5, 6, 3 );
+    }
+    
+    @Test
+    public void testDeleteGroup() throws SQLException, DiceRollerException
+    {
+        SqliteGroup group = ( SqliteGroup ) suite.groups ().get ( 1 );
 
-        // Rename to Null
+        model.deleteGroup ( group );
         
-        group.name ( null );
-        assertEquals ( "<unnamed-group>", new Sql ( db, "select name from groups where id = 1" ).go ().single ().getString ( 1 ) );
+        assertEquals ( 6, suite.groups ().size () );
+        assertFalse ( suite.groups ().contains ( group ) );
+
+        assertGroupOrder ( 1, 3, 4, 5, 6, 7 );
     }
     
-    @Test
-    public void testRearrangeGroups() throws SQLException
+    private void assertGroupOrder ( int... order ) throws SQLException
     {
-        FXCollections.sort ( suite.groupsProperty ().getValue (), ListRearranger.reverse ( suite.groups () ) );
+        assertEquals ( order.length, suite.groups ().size () );
         
-        int n = 3;
-        int s = 1;
+        for ( int n=0; n<order.length; n++ )
+            assertEquals ( "G" + order[ n ], suite.groups ().get ( n ).name() );
         
-        for ( ResultSet row : new Sql ( db, "select name,sequence from groups order by sequence" ).go () )
+        int n = 0;
+        
+        for ( ResultSet row : new Sql ( db, "select name,sequence from groups order by sequence" ).go() )
         {
-            assertEquals ( "G" + n, row.getString ( 1 ) );
-            assertEquals ( s, row.getInt ( 2 ) );
-            
-            n--;
-            s++;
+            assertEquals ( "G" + order[ n ], row.getString ( 1 ) );
+            assertEquals ( ++n, row.getInt ( 2 ) );
         }
+        
+        assertEquals ( order.length, n );
     }
     
     @Test
-    public void testDeleteGroup() throws SQLException
+    public void testCreateRoller() throws SQLException, DiceRollerException
     {
-        suite.groups ().remove ( 1 );
+        SqliteGroup group = ( SqliteGroup ) suite.groups ().get ( 1 );
+        SqliteRoller roller = ( SqliteRoller ) model.createRoller ( group, "RN", "d4" );
         
-        assertEquals ( 2, new Sql ( db, "select count (*) from groups" ).go ().single ().getInt ( 1 ) );
-        
-        int n = 1;
-        int s = 1;
-        
-        for ( ResultSet row : new Sql ( db, "select name,sequence from groups order by sequence" ).go () )
-        {
-            assertEquals ( "G" + n, row.getString ( 1 ) );
-            assertEquals ( s, row.getInt ( 2 ) );
-            
-            n += 2;
-            s++;
-        }
-    }
-    
-    @Test
-    public void testDeleteAllGroups() throws SQLException
-    {
-        suite.groups ().clear();
-        
-        assertEquals ( 0, new Sql ( db, "select count (*) from groups" ).go ().single ().getInt ( 1 ) );
-        assertEquals ( 0, new Sql ( db, "select count (*) from rollers" ).go ().single ().getInt ( 1 ) );
-        assertEquals ( 0, new Sql ( db, "select count (*) from labels" ).go ().single ().getInt ( 1 ) );
-        assertEquals ( 0, new Sql ( db, "select count (*) from rollerTriggers" ).go ().single ().getInt ( 1 ) );
-    }
-    
-    @Test
-    public void testCreateRoller() throws SQLException
-    {
-        Roller roller = suite.groups ().get ( 1 ).newRoller ();
-        
+        assertEquals ( 1, group.rollers ().size () );
+        assertTrue ( group.rollers ().contains ( roller ) );
+
         assertNotNull ( roller.lua () );
+        assertEquals ( "RN", roller.name () );
+        assertEquals ( "d4", roller.definition () );
+        assertTrue ( roller.isValid () );
         
-        roller.name ( "RN" );
-        
-        ResultSet row = new Sql ( db, "select groupId,name,sequence from rollers where id = ( select max ( id ) from rollers )" ).go ().single ();
+        ResultSet row = new Sql ( db, "select groupId,name,definition,sequence from rollers where id = ( select max ( id ) from rollers )" ).go ().single ();
         
         assertEquals ( 2, row.getInt ( 1 ) );
         assertEquals ( "RN", row.getString ( 2 ) );
-        assertEquals ( 1, row.getInt ( 3 ) );
+        assertEquals ( "d4", row.getString ( 3 ) );
+        assertEquals ( 1, row.getInt ( 4 ) );
     }
     
     @Test
-    public void testRenameRoller() throws SQLException
+    public void testUpdateRoller() throws SQLException, DiceRollerException
     {
-        Roller roller = suite.groups ().get ( 0 ).rollers ().get ( 0 );
-        
-        // Rename
-        
-        roller.name ( "RR" );
-        assertEquals ( "RR", new Sql ( db, "select name from rollers where id = 1" ).go ().single ().getString ( 1 ) );
-        
-        // Rename to Blank
-        
-        roller.name ( "" );
-        assertEquals ( "<unnamed-roller>", new Sql ( db, "select name from rollers where id = 1" ).go ().single ().getString ( 1 ) );
+        SqliteRoller roller = ( SqliteRoller ) suite.groups ().get ( 0 ).rollers ().get ( 0 );
 
-        // Rename 
+        model.updateRoller ( roller, "RN", "d8" );
         
-        roller.name ( "RRR" );
-        assertEquals ( "RRR", new Sql ( db, "select name from rollers where id = 1" ).go ().single ().getString ( 1 ) );
-
-        // Rename to Null
-        
-        roller.name ( null );
-        assertEquals ( "<unnamed-roller>", new Sql ( db, "select name from rollers where id = 1" ).go ().single ().getString ( 1 ) );
-    }
-    
-    @Test
-    public void testChangeRollerDefinition() throws SQLException
-    {
-        Roller roller = suite.groups ().get ( 0 ).rollers ().get ( 0 );
-        
-        roller.definition ( "d6 + 10" );
-        assertEquals ( "d6 + 10", new Sql ( db, "select definition from rollers where id = 1" ).go ().single ().getString ( 1 ) );
+        assertEquals ( "RN", roller.name () );
+        assertEquals ( "d8", roller.definition () );
         assertTrue ( roller.isValid () );
         
-        roller.definition ( "3,6d10 + d5" );
-        assertEquals ( "3,6d10 + d5", new Sql ( db, "select definition from rollers where id = 1" ).go ().single ().getString ( 1 ) );
-        assertTrue ( roller.isValid () );
+        ResultSet row = new Sql ( db, "select name,definition from rollers where id=?" ).go ( roller.id () ).single ();
         
-        roller.definition ( "d6 + " );
-        assertEquals ( "d6 + ", new Sql ( db, "select definition from rollers where id = 1" ).go ().single ().getString ( 1 ) );
-        assertFalse ( roller.isValid () );
+        assertEquals ( "RN", row.getString ( 1 ) );
+        assertEquals ( "d8", row.getString ( 2 ) );
     }
     
     @Test
-    public void testRearrangeRollers() throws SQLException
+    public void testRearrangeRollers() throws SQLException, DiceRollerException
     {
-        FXCollections.sort ( suite.groups ().get ( 0 ).rollersProperty().getValue (), ListRearranger.reverse ( suite.groups ().get ( 0 ).rollers() ) );
+        SqliteGroup group = ( SqliteGroup ) suite.groups ().get ( 0 );
         
-        int n = 7;
-        int s = 1;
+        // Move First Down 1
+        model.moveRoller ( group.rollers ().get ( 0 ), 2 );
+        assertRollerOrder ( group, 2, 1, 3, 4, 5, 6, 7 );
         
-        for ( ResultSet row : new Sql ( db, "select name,sequence from rollers order by sequence" ).go () )
+        // Move First Down 2
+        model.moveRoller ( group.rollers ().get ( 0 ), 3 );
+        assertRollerOrder ( group, 1, 3, 2, 4, 5, 6, 7 );
+        
+        // Move First to Last
+        model.moveRoller ( group.rollers ().get ( 0 ), 7 );
+        assertRollerOrder ( group, 3, 2, 4, 5, 6, 7, 1 );
+        
+        // Move Last Up 1
+        model.moveRoller ( group.rollers ().get ( 6 ), 6 );
+        assertRollerOrder ( group, 3, 2, 4, 5, 6, 1, 7 );
+        
+        // Move Last Up 2
+        model.moveRoller ( group.rollers ().get ( 6 ), 5 );
+        assertRollerOrder ( group, 3, 2, 4, 5, 7, 6, 1 );
+        
+        // Move Last to First
+        model.moveRoller ( group.rollers ().get ( 6 ), 1 );
+        assertRollerOrder ( group, 1, 3, 2, 4, 5, 7, 6 );
+        
+        // Move Middle Up 1
+        model.moveRoller ( group.rollers ().get ( 3 ), 3 );
+        assertRollerOrder ( group, 1, 3, 4, 2, 5, 7, 6 );
+        
+        // Move Middle Up 2
+        model.moveRoller ( group.rollers ().get ( 3 ), 2 );
+        assertRollerOrder ( group, 1, 2, 3, 4, 5, 7, 6 );
+        
+        // Move Middle To First
+        model.moveRoller ( group.rollers ().get ( 3 ), 1 );
+        assertRollerOrder ( group, 4, 1, 2, 3, 5, 7, 6 );
+        
+        // Move Middle Down 1
+        model.moveRoller ( group.rollers ().get ( 3 ), 5 );
+        assertRollerOrder ( group, 4, 1, 2, 5, 3, 7, 6 );
+        
+        // Move Middle Down 2
+        model.moveRoller ( group.rollers ().get ( 3 ), 6 );
+        assertRollerOrder ( group, 4, 1, 2, 3, 7, 5, 6 );
+        
+        // Move Middle To Last
+        model.moveRoller ( group.rollers ().get ( 3 ), 7 );
+        assertRollerOrder ( group, 4, 1, 2, 7, 5, 6, 3 );
+    }
+    
+    @Test
+    public void testDeleteRoller() throws SQLException, DiceRollerException
+    {
+        SqliteGroup group = ( SqliteGroup ) suite.groups ().get ( 0 );
+        SqliteRoller roller = ( SqliteRoller ) group.rollers ().get ( 0 );
+        
+        model.deleteRoller ( roller );
+        
+        assertFalse ( group.rollers ().contains ( roller ) );
+        
+        assertRollerOrder ( group, 2, 3, 4, 5, 6, 7 );
+        
+        assertEquals ( 0, new Sql ( db, "select count (*) from labels" ).go ().single ().getInt ( 1 ) );
+        assertEquals ( 0, new Sql ( db, "select count (*) from rollerTriggers" ).go ().single ().getInt ( 1 ) );
+    }
+    
+    private void assertRollerOrder ( SqliteGroup group, int... order ) throws SQLException
+    {
+        assertEquals ( order.length, group.rollers ().size () );
+        
+        for ( int n=0; n<order.length; n++ )
+            assertEquals ( "R" + order[ n ], group.rollers ().get ( n ).name() );
+        
+        int n = 0;
+        
+        for ( ResultSet row : new Sql ( db, "select name,sequence from rollers where groupId=? order by sequence" ).go ( group.id() ) )
         {
-            assertEquals ( "R" + n, row.getString ( 1 ) );
-            assertEquals ( s, row.getInt ( 2 ) );
-            
-            n--;
-            s++;
+            assertEquals ( "R" + order[ n ], row.getString ( 1 ) );
+            assertEquals ( ++n, row.getInt ( 2 ) );
         }
+        
+        assertEquals ( order.length, n );
     }
-    
+
     @Test
-    public void testDeleteRoller() throws SQLException
+    public void testCreateLabel() throws SQLException, DiceRollerException
     {
-        suite.groups ().get ( 0 ).rollers ().remove ( 0 );
+        SqliteRoller roller = ( SqliteRoller ) suite.groups ().get ( 0 ).rollers ().get ( 0 );
         
-        assertEquals ( 6, new Sql ( db, "select count (*) from rollers" ).go ().single ().getInt ( 1 ) );
+        model.createLabel ( roller, 3, "L3" );
         
-        int n = 2;
-        int s = 1;
+        int n = 0;
         
-        for ( ResultSet row : new Sql ( db, "select name,sequence from rollers order by sequence" ).go () )
+        for ( ResultSet row : new Sql ( db, "select value,label from labels where rollerId=? order by value" ).go ( roller.id () ) )
         {
-            assertEquals ( "R" + n, row.getString ( 1 ) );
-            assertEquals ( s, row.getInt ( 2 ) );
-            
             n++;
-            s++;
-        }
-        
-        assertEquals ( 0, new Sql ( db, "select count (*) from labels" ).go ().single ().getInt ( 1 ) );
-        assertEquals ( 0, new Sql ( db, "select count (*) from rollerTriggers" ).go ().single ().getInt ( 1 ) );
-    }
-    
-    @Test
-    public void testDeleteAllRollers() throws SQLException
-    {
-        suite.groups ().clear();
-        
-        assertEquals ( 0, new Sql ( db, "select count (*) from groups" ).go ().single ().getInt ( 1 ) );
-        assertEquals ( 0, new Sql ( db, "select count (*) from rollers" ).go ().single ().getInt ( 1 ) );
-        assertEquals ( 0, new Sql ( db, "select count (*) from labels" ).go ().single ().getInt ( 1 ) );
-        assertEquals ( 0, new Sql ( db, "select count (*) from rollerTriggers" ).go ().single ().getInt ( 1 ) );
-    }
-
-    @Test
-    public void testAddLabel() throws SQLException
-    {
-        suite.groups ().get ( 0 ).rollers ().get ( 0 ).labels ().put ( 3, "L3" );
-        
-        int n = 1;
-        
-        for ( ResultSet row : new Sql ( db, "select value,label from labels where rollerId = 1 order by value" ).go () )
-        {
+            
             assertEquals ( n, row.getInt ( 1 ) );
             assertEquals ( "L" + n, row.getString ( 2 ) );
-            
-            n++;
         }
-    }
-
-    @Test
-    public void testReplaceLabel() throws SQLException
-    {
-        suite.groups ().get ( 0 ).rollers ().get ( 0 ).labels ().put ( 2, "L3" );
         
-        assertEquals ( "L3", new Sql ( db, "select label from labels where value = 2" ).go ().single ().getString ( 1 ) );
-    }
-    
-    @Test
-    public void testDeleteLabel() throws SQLException
-    {
-        suite.groups ().get ( 0 ).rollers ().get ( 0 ).labels ().remove ( 1 );
-
-        assertEquals ( 1, new Sql ( db, "select count(*) from labels" ).go ().single ().getInt ( 1 ) );
-        assertEquals ( 2, new Sql ( db, "select value from labels" ).go ().single ().getInt ( 1 ) );
+        assertEquals ( 3, n );
     }
 
     @Test
-    public void testDeleteAllLabels() throws SQLException
+    public void testUpdateLabels() throws SQLException, DiceRollerException
     {
-        suite.groups ().get ( 0 ).rollers ().get ( 0 ).labels ().clear();
+        SqliteRoller roller = ( SqliteRoller ) suite.groups ().get ( 0 ).rollers ().get ( 0 );
 
-        assertEquals ( 0, new Sql ( db, "select count(*) from labels" ).go ().single ().getInt ( 1 ) );
+        Map<Integer,String> labels = new HashMap<> ();
+        
+        labels.put ( 10, "L10" );
+        labels.put ( 11, "L11" );
+        labels.put ( 12, "L12" );
+        labels.put ( 13, "L13" );
+        
+        model.updateLabels ( roller, labels );
+        
+        assertEquals ( 4, roller.labels ().size () );
+        
+        for ( int n = 10; n < 14; n++ )
+        {
+            assertTrue ( roller.labels ().containsKey ( n ) );
+            assertEquals ( "L" + n, roller.labels ().get ( n ) );
+        }
+        
+        int n = 10;
+        
+        for ( ResultSet row : new Sql ( db, "select value,label from labels where rollerId=?" ).go ( roller.id () ) )
+        {
+            assertEquals ( n, row.getInt ( 1 ) );
+            assertEquals ( "L" + n++, row.getString ( 2 ) );
+        }
+        
+        assertEquals ( 14, n );
     }
 }
